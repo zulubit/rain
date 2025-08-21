@@ -46,6 +46,11 @@
     <keyed-list-demo></keyed-list-demo>
   </div>
 
+  <div class="example">
+    <h2>Fragments</h2>
+    <fragment-demo></fragment-demo>
+  </div>
+
   <script src="./rainwc.umd.min.js"></script>
   <script>
     const { rain, html, $, match, list } = RainWC
@@ -142,6 +147,24 @@
             todo => todo.id
           )}
           <button @click=${addTodo}>Add Todo</button>
+        </div>
+      `
+    })
+    
+    // Fragments
+    rain('fragment-demo', function() {
+      const [showContent, setShowContent] = $(true)
+      
+      return () => html`
+        <div>
+          <button @click=${() => setShowContent(!showContent())}>Toggle Content</button>
+          ${showContent() ? html`
+            <frag>
+              <h3>Title</h3>
+              <p>Paragraph 1</p>
+              <p>Paragraph 2</p>
+            </frag>
+          ` : ''}
         </div>
       `
     })

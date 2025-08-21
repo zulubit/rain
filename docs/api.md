@@ -1,6 +1,6 @@
 # API Reference
 
-Complete reference for RainJS functions and utilities.
+Complete reference for RainWC functions and utilities.
 
 ## Core Functions
 
@@ -78,6 +78,46 @@ $.emit('custom-event', { data: 'value' }, element)
 - `eventName: string` - event name to emit
 - `detail?: any` - event detail data (optional)
 - `target?: EventTarget` - target to emit from (defaults to document)
+
+### `$.css`
+Creates reactive CSS stylesheets using template literals.
+
+```javascript
+rain('styled-component', function() {
+  const [theme, setTheme] = $('light')
+  
+  const bgColor = $.computed(() => 
+    theme() === 'dark' ? '#333' : '#fff'
+  )
+  
+  const styles = $.css`
+    .container {
+      background: ${bgColor};
+      padding: 1rem;
+      border-radius: 8px;
+    }
+  `
+  
+  return () => html`
+    <div class="container">
+      ${styles}
+      <p>Theme: ${theme}</p>
+      <button @click=${() => setTheme(theme() === 'light' ? 'dark' : 'light')}>Toggle</button>
+    </div>
+  `
+})
+```
+
+**Parameters**:
+- Template literal with CSS and reactive interpolations
+
+**Returns**: `() => Element` - computed signal returning `<style>` element
+
+**Notes**:
+- Must be used as template literal: `$.css\`...\``
+- Supports reactive values through computed signals
+- Returns new `<style>` element on each call
+- CSS is automatically scoped within Shadow DOM
 
 ## Component System
 
@@ -276,6 +316,24 @@ html`<input type="text" placeholder=${hint} />`
 html`<button disabled=${isDisabled}>Button</button>`
 // disabled=true sets attribute, disabled=false removes it
 ```
+
+### Fragments
+Use `<frag>` to group elements without creating wrapper DOM:
+
+```javascript
+html`
+  <frag>
+    <h1>Title</h1>
+    <p>Content</p>
+  </frag>
+`
+// Creates h1 and p elements with display: contents container
+```
+
+**Benefits**:
+- Groups elements logically without affecting layout
+- Uses `display: contents` CSS property
+- Useful for conditional rendering of multiple elements
 
 ## Component Communication
 

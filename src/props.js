@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS Props - Type-aware property system with JSON support
- * @version 0.0.4
+ * @version 0.0.5
  */
 
 import { createLogger } from './logger.js'

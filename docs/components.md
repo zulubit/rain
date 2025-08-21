@@ -1,10 +1,10 @@
 # Components
 
-RainJS components are Web Components with reactive templates and built-in state management. They provide encapsulation, lifecycle hooks, and seamless integration with existing HTML.
+RainWC components are Web Components with reactive templates and built-in state management. They provide encapsulation, lifecycle hooks, and seamless integration with existing HTML.
 
 ## Basic Component Structure
 
-Every RainJS component follows this pattern:
+Every RainWC component follows this pattern:
 
 ```javascript
 rain('component-name', function() {
@@ -390,7 +390,7 @@ rain('save-button', {
 
 ## Shadow DOM and Styling
 
-RainJS components use Shadow DOM by default, providing style encapsulation:
+RainWC components use Shadow DOM by default, providing style encapsulation:
 
 ```javascript
 rain('styled-component', function() {
@@ -412,6 +412,37 @@ rain('styled-component', function() {
     <div class="container">
       <h2 class="title">Styled Component</h2>
       <p>This component has isolated styles.</p>
+    </div>
+  `
+})
+```
+
+### Reactive CSS with $.css
+
+For reactive styling, use the `$.css` template literal to create computed style elements:
+
+```javascript
+rain('theme-card', {
+  theme: { type: String, default: 'light' }
+}, function(props) {
+  const bgColor = $.computed(() => 
+    props().theme === 'dark' ? '#333' : '#fff'
+  )
+  
+  const styles = $.css`
+    .card {
+      background: ${bgColor};
+      color: ${$.computed(() => props().theme === 'dark' ? '#fff' : '#333')};
+      padding: 1rem;
+      border-radius: 8px;
+    }
+  `
+  
+  return () => html`
+    <div class="card">
+      ${styles}
+      <h3>Theme: ${props().theme}</h3>
+      <p>Reactive styling with $.css</p>
     </div>
   `
 })
@@ -473,7 +504,7 @@ rain('error-prone', function() {
 })
 ```
 
-When a component throws an error, RainJS will:
+When a component throws an error, RainWC will:
 1. Log the error with context
 2. Render a fallback error UI
 3. Prevent the error from breaking other components

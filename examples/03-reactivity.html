@@ -41,6 +41,11 @@
     <effects-demo></effects-demo>
   </div>
 
+  <div class="example">
+    <h2>Reactive CSS</h2>
+    <reactive-styles></reactive-styles>
+  </div>
+
   <script src="./rainwc.umd.min.js"></script>
   <script>
     const { rain, html, $ } = RainWC
@@ -92,6 +97,35 @@
           <p>Current title: ${title}</p>
           <p>Check browser tab title!</p>
           <button @click=${() => setTitle('Updated!')}>Change Title</button>
+        </div>
+      `
+    })
+    
+    // Reactive CSS
+    rain('reactive-styles', function() {
+      const [theme, setTheme] = $('light')
+      
+      const bgColor = $.computed(() => 
+        theme() === 'dark' ? '#333' : '#fff'
+      )
+      
+      const styles = $.css`
+        .container {
+          background: ${bgColor};
+          color: ${$.computed(() => theme() === 'dark' ? '#fff' : '#333')};
+          padding: 1rem;
+          border-radius: 8px;
+        }
+      `
+      
+      return () => html`
+        <div class="container">
+          ${styles}
+          <h3>Reactive CSS Demo</h3>
+          <p>Current theme: ${theme}</p>
+          <button @click=${() => setTheme(theme() === 'light' ? 'dark' : 'light')}>
+            Toggle Theme
+          </button>
         </div>
       `
     })

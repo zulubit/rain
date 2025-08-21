@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS Core - Reactive template system with HTM and Preact signals
- * @version 0.0.4
+ * @version 0.0.5
  */
 
 import htm from 'htm'
@@ -82,7 +82,7 @@ function processAttribute(element, key, value) {
  * @private
  */
 function h(type, props, ...children) {
-  if (type === '') {
+  if (type === 'frag') {
     const fragment = document.createElement('div')
     fragment.style.display = 'contents'
 
@@ -138,11 +138,26 @@ function processChild(element, child) {
   if (typeof child === 'string' || typeof child === 'number') {
     element.appendChild(document.createTextNode(String(child)))
   } else if (typeof child === 'function' && child[SIGNAL_SYMBOL]) {
-    const textNode = document.createTextNode('')
+    let currentChild = null
     effect(() => {
-      textNode.textContent = String(child() ?? '')
+      const value = child()
+      if (value instanceof Node) {
+        if (currentChild && currentChild.parentNode === element) {
+          element.removeChild(currentChild)
+        }
+        element.appendChild(value)
+        currentChild = value
+      } else {
+        if (!currentChild || currentChild.nodeType !== Node.TEXT_NODE) {
+          if (currentChild && currentChild.parentNode === element) {
+            element.removeChild(currentChild)
+          }
+          currentChild = document.createTextNode('')
+          element.appendChild(currentChild)
+        }
+        currentChild.textContent = String(value ?? '')
+      }
     })
-    element.appendChild(textNode)
   } else if (child instanceof Node) {
     element.appendChild(child)
   } else {
@@ -183,7 +198,7 @@ function html(strings, ...values) {
   // Add a unique cache-buster to prevent HTM from reusing DOM elements between component instances
   const modifiedStrings = [...strings]
   modifiedStrings[modifiedStrings.length - 1] += `<!-- ${getInstanceKey()} -->`
-  
+
   return htmBound(modifiedStrings, ...values)
 }
 
@@ -461,7 +476,7 @@ function render(elementOrFn, container) {
   }
 
   logger.error('render() expects a DOM node or function returning DOM node')
-  return { dispose: () => {} }
+  return { dispose: () => { } }
 }
 
 /**
@@ -540,9 +555,9 @@ $.listen = function(eventName, handler, target = document) {
   if (typeof handler !== 'function') {
     throw new Error('$.listen expects handler to be a function')
   }
-  
+
   target.addEventListener(eventName, handler)
-  
+
   return () => {
     target.removeEventListener(eventName, handler)
   }
@@ -560,17 +575,51 @@ $.emit = function(eventName, detail, target) {
   if (typeof eventName !== 'string') {
     throw new Error('$.emit expects eventName to be a string')
   }
-  
+
   // Use provided target or default to document for global events
   const emitter = target || document
-  
+
   const event = new CustomEvent(eventName, {
     detail,
     bubbles: true,
     composed: true
   })
-  
+
   emitter.dispatchEvent(event)
+}
+
+/**
+ * Creates a reactive CSS style element from template literal
+ * @param {TemplateStringsArray} strings - Template string parts
+ * @param {...any} values - Template interpolation values
+ * @returns {() => Element} Computed signal returning reactive style element
+ * @throws {Error} When template contains invalid CSS
+ * @example
+ * const styles = $.css`
+ *   .container { 
+ *     background: ${theme() === 'dark' ? '#333' : '#fff'}; 
+ *   }
+ * `
+ */
+$.css = function(strings, ...values) {
+  if (!Array.isArray(strings)) {
+    throw new Error('$.css must be used as a template literal')
+  }
+
+  return $.computed(() => {
+    let css = ''
+    for (let i = 0; i < strings.length; i++) {
+      css += strings[i]
+      if (i < values.length) {
+        const value = values[i]
+        css += typeof value === 'function' && value[SIGNAL_SYMBOL] ? value() : value
+      }
+    }
+
+    const style = document.createElement('style')
+    style.textContent = css
+    return style
+  })
 }
 
 export { $, html, render, list, match }

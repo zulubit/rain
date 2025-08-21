@@ -1,6 +1,6 @@
 # Reactivity
 
-RainJS uses reactive signals for state management with automatic updates.
+RainWC uses reactive signals for state management with automatic updates.
 
 ## Basic Signals
 
@@ -14,7 +14,7 @@ rain('basic-signals', function() {
       <p>Count: ${count}</p>
       <p>Hello ${name}</p>
       <button @click=${() => setCount(count() + 1)}>+</button>
-      <button @click=${() => setName('RainJS')}>Change Name</button>
+      <button @click=${() => setName('RainWC')}>Change Name</button>
     </div>
   `
 })
@@ -46,7 +46,7 @@ rain('computed-demo', function() {
 
 ```javascript
 rain('effects-demo', function() {
-  const [title, setTitle] = $('RainJS')
+  const [title, setTitle] = $('RainWC')
   
   $.effect(() => {
     document.title = `${title()} - Reactivity Demo`
@@ -133,6 +133,40 @@ $.effect(() => {
   }, 1000)
   
   return () => clearInterval(timer)
+})
+```
+
+## Reactive CSS
+
+The `$.css` template literal creates reactive stylesheets:
+
+```javascript
+rain('reactive-styles', function() {
+  const [theme, setTheme] = $('light')
+  
+  const bgColor = $.computed(() => 
+    theme() === 'dark' ? '#333' : '#fff'
+  )
+  
+  const styles = $.css`
+    .container {
+      background: ${bgColor};
+      color: ${$.computed(() => theme() === 'dark' ? '#fff' : '#333')};
+      padding: 1rem;
+      border-radius: 8px;
+    }
+  `
+  
+  return () => html`
+    <div class="container">
+      ${styles}
+      <h3>Reactive CSS Demo</h3>
+      <p>Current theme: ${theme}</p>
+      <button @click=${() => setTheme(theme() === 'light' ? 'dark' : 'light')}>
+        Toggle Theme
+      </button>
+    </div>
+  `
 })
 ```
 

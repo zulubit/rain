@@ -42,6 +42,12 @@
     <lifecycle-demo></lifecycle-demo>
   </div>
 
+  <div class="example">
+    <h2>Reactive CSS</h2>
+    <theme-card theme="light"></theme-card>
+    <theme-card theme="dark"></theme-card>
+  </div>
+
   <script src="./rainwc.umd.min.js"></script>
   <script>
     const { rain, html, $, onMounted, onUnmounted } = RainWC
@@ -107,6 +113,34 @@
       
       return () => html`
         <p>Status: ${status}</p>
+      `
+    })
+    
+    // Reactive CSS component
+    rain('theme-card', {
+      theme: { type: String, default: 'light' }
+    }, function(props) {
+      const bgColor = $.computed(() => 
+        props().theme === 'dark' ? '#333' : '#fff'
+      )
+      
+      const styles = $.css`
+        .card {
+          background: ${bgColor};
+          color: ${$.computed(() => props().theme === 'dark' ? '#fff' : '#333')};
+          padding: 1rem;
+          border-radius: 8px;
+          margin: 0.5rem;
+          border: 1px solid ${$.computed(() => props().theme === 'dark' ? '#555' : '#ddd')};
+        }
+      `
+      
+      return () => html`
+        <div class="card">
+          ${styles}
+          <h3>Theme: ${props().theme}</h3>
+          <p>Reactive styling with $.css</p>
+        </div>
       `
     })
   </script>

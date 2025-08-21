@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS - Reactive Web Components with HTM templates and Preact signals
- * @version 0.0.4
+ * @version 0.0.5
  * @author RainJS Team
  * @license MIT
  */

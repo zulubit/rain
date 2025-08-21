@@ -157,11 +157,11 @@ describe('core.js', () => {
       expect(el2.disabled).toBe(false)
     })
 
-    it('should handle fragments with empty tag', () => {
-      const frag = html`<>
+    it('should handle fragments with frag tag', () => {
+      const frag = html`<frag>
         <div>First</div>
         <div>Second</div>
-      </>`
+      </frag>`
       expect(frag.style.display).toBe('contents')
       expect(frag.children).toHaveLength(2)
       expect(frag.children[0].textContent).toBe('First')
@@ -266,6 +266,47 @@ describe('core.js', () => {
       const [value] = $('test')
       expect(() => match(value, null)).toThrow('match() expects an object of cases')
       expect(() => match(value, 'not an object')).toThrow('match() expects an object of cases')
+    })
+  })
+
+  describe('$.css', () => {
+    it('should create reactive CSS style element', () => {
+      const [theme, setTheme] = $('light')
+      const bgColor = $.computed(() => theme() === 'dark' ? '#333' : '#fff')
+      
+      const styles = $.css`
+        .container {
+          background: ${bgColor};
+        }
+      `
+      
+      const styleEl = styles()
+      expect(styleEl.tagName).toBe('STYLE')
+      expect(styleEl.textContent).toContain('background: #fff')
+      
+      setTheme('dark')
+      
+      const styleEl2 = styles()
+      expect(styleEl2.textContent).toContain('background: #333')
+    })
+
+    it('should handle static CSS', () => {
+      const styles = $.css`
+        .button { 
+          padding: 1rem; 
+          border: none;
+        }
+      `
+      
+      const styleEl = styles()
+      expect(styleEl.textContent).toContain('padding: 1rem')
+      expect(styleEl.textContent).toContain('border: none')
+    })
+
+    it('should throw for non-template literal usage', () => {
+      expect(() => {
+        $.css('.invalid { color: red; }')
+      }).toThrow('$.css must be used as a template literal')
     })
   })
 

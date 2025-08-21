@@ -1,6 +1,6 @@
 # Templates
 
-RainJS uses HTM (Hyperscript Tagged Markup) for templates. No build step needed.
+RainWC uses HTM (Hyperscript Tagged Markup) for templates. No build step needed.
 
 ## Dynamic Content and Computed Values
 
@@ -66,7 +66,7 @@ rain('list-demo', function() {
 ```javascript
 rain('keyed-list-demo', function() {
   const [todos, setTodos] = $([
-    { id: 1, text: 'Learn RainJS', done: false },
+    { id: 1, text: 'Learn RainWC', done: false },
     { id: 2, text: 'Build app', done: true },
     { id: 3, text: 'Deploy', done: false }
   ])
@@ -118,6 +118,7 @@ rain('keyed-list-demo', function() {
 - **Conditionals**: `match(signal, cases)` for conditional rendering
 - **Lists**: `list(signal, renderFn)` for arrays
 - **Keyed Lists**: `list(signal, renderFn, keyFn)` for smart reconciliation
+- **Fragments**: `<frag>` for grouping elements without wrapper DOM
 - **Computed**: `$.computed(() => expression)` for derived values
 
 ## Conditional Rendering with match()
@@ -160,7 +161,7 @@ match(userType, {
 
 ## List Reconciliation
 
-RainJS uses smart reconciliation with keys to efficiently update lists:
+RainWC uses smart reconciliation with keys to efficiently update lists:
 
 **Without keys** (simple):
 ```javascript
@@ -177,6 +178,31 @@ list(items, item => html`<li>${item.name}</li>`, item => item.id)
 - Preserves DOM state and focus
 - Optimal performance for dynamic lists
 - Key function should return unique, stable identifiers
+
+## Fragments
+
+Use `<frag>` elements to group multiple elements without creating wrapper DOM:
+
+```javascript
+rain('fragment-demo', function() {
+  const [showContent, setShowContent] = $(true)
+  
+  return () => html`
+    <div>
+      <button @click=${() => setShowContent(!showContent())}>Toggle Content</button>
+      ${showContent() ? html`
+        <frag>
+          <h3>Title</h3>
+          <p>Paragraph 1</p>
+          <p>Paragraph 2</p>
+        </frag>
+      ` : ''}
+    </div>
+  `
+})
+```
+
+Fragments use `display: contents` CSS, so they don't affect layout but group elements logically.
 
 ## Template Patterns
 
@@ -198,6 +224,12 @@ match(status, {
 
 // List rendering
 list(items, item => html`<div>${item}</div>`, item => item.id)
+
+// Fragments for grouping
+html`<frag>
+  <h1>Title</h1>
+  <p>Content</p>
+</frag>`
 ```
 
 ## Working Example
