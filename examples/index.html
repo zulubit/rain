@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RainJS Examples</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f8f9fa;
+      min-height: 100vh;
+      padding: 3rem 2rem;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
+      font-weight: 600;
+      color: #222;
+    }
+    .subtitle {
+      text-align: center;
+      margin-bottom: 4rem;
+      font-size: 1.2rem;
+      color: #555;
+      font-weight: 300;
+    }
+    .hero-card {
+      background: white;
+      border: 3px solid #000;
+      border-radius: 12px;
+      padding: 3rem;
+      text-align: center;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+    .hero-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      border-color: #333;
+    }
+    .hero-card h1 {
+      margin-bottom: 1rem;
+      font-size: 3.5rem;
+    }
+    .hero-card .tagline {
+      font-size: 1.3rem;
+      color: #555;
+      font-weight: 300;
+      margin-bottom: 0;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    .feature-card {
+      background: #fbfcff;
+      border: 3px solid #000;
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      border-color: #333;
+    }
+    .feature-card h3 {
+      margin-bottom: 0.8rem;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #222;
+    }
+    .feature-card p {
+      color: #666;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    .example-card {
+      display: block;
+      background: #fbfcff;
+      border: 3px solid #000;
+      border-radius: 12px;
+      padding: 2.5rem;
+      text-decoration: none;
+      color: #333;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .example-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      border-color: #333;
+    }
+    .example-card h3 {
+      margin-bottom: 0.8rem;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #222;
+    }
+    .example-card p {
+      color: #666;
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+    .section-card {
+      background: #fbfcff;
+      border: 3px solid #000;
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+    .section-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      border-color: #333;
+    }
+    .section-card h2 {
+      margin: 0;
+      font-size: 2rem;
+      color: #222;
+      font-weight: 500;
+    }
+    .footer-card {
+      background: #fbfcff;
+      border: 3px solid #000;
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      margin-top: 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+    .footer-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      border-color: #333;
+    }
+    .footer-card p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    @media (max-width: 768px) {
+      .examples-grid, .features-grid {
+        grid-template-columns: 1fr;
+      }
+      body {
+        padding: 2rem 1rem;
+      }
+      .hero-card h1 {
+        font-size: 2.5rem;
+      }
+      .hero-card {
+        padding: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero-card">
+      <h1>🌧️ RainJS</h1>
+      <p class="tagline">Lightweight reactive Web Components with fine-grained reactivity</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <h3>Fine-grained Reactivity</h3>
+        <p>Powered by Preact signals for efficient, precise updates</p>
+      </div>
+      <div class="feature-card">
+        <h3>Tiny Size</h3>
+        <p>Only 7KB gzipped with no build step required</p>
+      </div>
+      <div class="feature-card">
+        <h3>Web Components</h3>
+        <p>Standard Web Components with reactive templates</p>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>Examples</h2>
+    </div>
+    
+    <div class="examples-grid">
+      <a href="01-getting-started.html" class="example-card">
+        <h3>01. Getting Started</h3>
+        <p>Your first RainJS components: counters, props, slots, and shadow DOM modes</p>
+      </a>
+
+      <a href="02-components.html" class="example-card">
+        <h3>02. Components</h3>
+        <p>Component lifecycle, events, and advanced patterns</p>
+      </a>
+
+      <a href="03-reactivity.html" class="example-card">
+        <h3>03. Reactivity</h3>
+        <p>Signals, computed values, and effects in action</p>
+      </a>
+
+      <a href="04-templates.html" class="example-card">
+        <h3>04. Templates</h3>
+        <p>Template syntax, directives, and dynamic rendering</p>
+      </a>
+    </div>
+
+    <div class="footer-card">
+      <p>Built with RainJS • Lightweight reactive Web Components</p>
+    </div>
+  </div>
+</body>
+</html>

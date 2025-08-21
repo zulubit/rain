@@ -1,0 +1,39 @@
+{
+  "name": "rainjs",
+  "version": "0.0.1",
+  "description": "Fine-grained reactive Web Components framework",
+  "type": "module",
+  "main": "dist/rainjs.umd.js",
+  "module": "dist/rainjs.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/rainjs.esm.js",
+      "require": "./dist/rainjs.umd.js"
+    }
+  },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node build.js",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "lint": "eslint src/**/*.js --fix"
+  },
+  "keywords": [
+    "web-components",
+    "reactive",
+    "signals",
+    "framework"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@preact/signals-core": "^1.11.0",
+    "esbuild": "^0.25.9",
+    "eslint": "^9.33.0",
+    "happy-dom": "^18.0.1",
+    "htm": "^3.1.1",
+    "vitest": "^3.2.4"
+  }
+}

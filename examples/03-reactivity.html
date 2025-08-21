@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reactivity - RainJS</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #f5f5f5;
+    }
+    .example {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 { color: #333; }
+    h2 { color: #666; margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>🌧️ Reactivity</h1>
+  
+  <div class="example">
+    <h2>Basic Signals</h2>
+    <basic-signals></basic-signals>
+  </div>
+
+  <div class="example">
+    <h2>Computed Values</h2>
+    <computed-demo></computed-demo>
+  </div>
+  
+  <div class="example">
+    <h2>Effects</h2>
+    <effects-demo></effects-demo>
+  </div>
+
+  <script src="./rainjs.umd.min.js"></script>
+  <script>
+    const { rain, html, $ } = RainJS
+    
+    // Basic signals
+    rain('basic-signals', function() {
+      const [count, setCount] = $(0)
+      const [name, setName] = $('World')
+      
+      return () => html`
+        <div>
+          <p>Count: ${count}</p>
+          <p>Hello ${name}</p>
+          <button @click=${() => setCount(count() + 1)}>+</button>
+          <button @click=${() => setName('RainJS')}>Change Name</button>
+        </div>
+      `
+    })
+    
+    // Computed values
+    rain('computed-demo', function() {
+      const [a, setA] = $(5)
+      const [b, setB] = $(3)
+      
+      const sum = $.computed(() => a() + b())
+      const product = $.computed(() => a() * b())
+      
+      return () => html`
+        <div>
+          <p>A: ${a} | B: ${b}</p>
+          <p>Sum: ${sum}</p>
+          <p>Product: ${product}</p>
+          <button @click=${() => setA(a() + 1)}>A+</button>
+          <button @click=${() => setB(b() + 1)}>B+</button>
+        </div>
+      `
+    })
+    
+    // Effects
+    rain('effects-demo', function() {
+      const [title, setTitle] = $('RainJS')
+      
+      $.effect(() => {
+        document.title = `${title()} - Reactivity Demo`
+      })
+      
+      return () => html`
+        <div>
+          <p>Current title: ${title}</p>
+          <p>Check browser tab title!</p>
+          <button @click=${() => setTitle('Updated!')}>Change Title</button>
+        </div>
+      `
+    })
+  </script>
+</body>
+</html>

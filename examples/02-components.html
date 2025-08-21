@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Components - RainJS</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #f5f5f5;
+    }
+    .example {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 { color: #333; }
+    h2 { color: #666; margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>🌧️ Components</h1>
+  
+  <div class="example">
+    <h2>Nested Components</h2>
+    <user-profile></user-profile>
+  </div>
+
+  <div class="example">
+    <h2>Component Events</h2>
+    <counter-with-events></counter-with-events>
+    <event-display></event-display>
+  </div>
+  
+  <div class="example">
+    <h2>Lifecycle Hooks</h2>
+    <lifecycle-demo></lifecycle-demo>
+  </div>
+
+  <script src="./rainjs.umd.min.js"></script>
+  <script>
+    const { rain, html, $, onMounted, onUnmounted } = RainJS
+    console.log('RainJS loaded:', { rain, html, $ })
+    
+    // Child component
+    rain('child-comp', function() {
+      return () => html`<span>I am a child</span>`
+    })
+    
+    // Parent component using child
+    rain('user-profile', function() {
+      return () => html`
+        <div>
+          <p>Parent component:</p>
+          <child-comp></child-comp>
+        </div>
+      `
+    })
+    
+    // Counter that emits events
+    rain('counter-with-events', function() {
+      const [count, setCount] = $(0)
+      
+      const increment = () => {
+        const newCount = count() + 1
+        setCount(newCount)
+        // Emit custom event when counter changes
+        $.emit('count-changed', { count: newCount })
+      }
+      
+      return () => html`
+        <button @click=${increment}>
+          Count: ${count}
+        </button>
+      `
+    })
+    
+    // Component that listens for events
+    rain('event-display', function() {
+      const [message, setMessage] = $('Waiting for events...')
+      
+      // Listen for events with automatic cleanup
+      $.listen('count-changed', (e) => {
+        setMessage(`Counter changed to: ${e.detail.count}`)
+      })
+      
+      return () => html`<p>${message}</p>`
+    })
+    
+    // Lifecycle demo
+    rain('lifecycle-demo', function() {
+      const [status, setStatus] = $('Created')
+      
+      onMounted(() => {
+        setStatus('Mounted')
+        console.log('Component mounted!')
+      })
+      
+      onUnmounted(() => {
+        console.log('Component unmounted!')
+      })
+      
+      return () => html`
+        <p>Status: ${status}</p>
+      `
+    })
+  </script>
+</body>
+</html>
