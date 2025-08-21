@@ -76,6 +76,13 @@ rain('user-card', {
 
 Browse the [examples](examples/) directory for working demos of all features.
 
+## Acknowledgments
+
+RainJS is built on top of excellent open source libraries:
+
+- **[@preact/signals-core](https://github.com/preactjs/signals)** - Fine-grained reactivity system
+- **[HTM](https://github.com/developit/htm)** - JSX-like syntax using template literals
+
 ## License
 
 MIT
