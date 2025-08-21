@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS Utilities - Shared utility functions across the framework
- * @version 0.0.1
+ * @version 0.0.3
  */
 
 /**

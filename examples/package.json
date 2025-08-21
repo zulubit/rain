@@ -1,6 +1,6 @@
 {
   "name": "rainjs-examples",
-  "version": "0.0.1", 
+  "version": "0.0.3", 
   "private": true,
   "description": "RainJS examples and demos",
   "type": "module",
