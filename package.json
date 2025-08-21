@@ -1,6 +1,6 @@
 {
   "name": "rainwc",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Fine-grained reactive Web Components framework",
   "type": "module",
   "main": "dist/rainwc.umd.js",
@@ -27,6 +27,15 @@
     "signals",
     "framework"
   ],
+  "author": "weatherjean",
+  "homepage": "https://github.com/zulubit/rain#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zulubit/rain.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zulubit/rain/issues"
+  },
   "license": "MIT",
   "devDependencies": {
     "@preact/signals-core": "^1.11.0",
