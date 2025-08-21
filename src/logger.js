@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS Logger - Structured logging utility for development
- * @version 0.0.3
+ * @version 0.0.4
  */
 
 import { isDebugEnabled } from './utils.js'

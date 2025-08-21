@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS Core - Reactive template system with HTM and Preact signals
- * @version 0.0.3
+ * @version 0.0.4
  */
 
 import htm from 'htm'

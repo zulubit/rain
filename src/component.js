@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS Component System - Web Components with reactive templates
- * @version 0.0.3
+ * @version 0.0.4
  */
 
 import { html, render, $ } from './core.js'
@@ -222,24 +222,6 @@ function createComponentClass(name, propDefs, factory, shadowMode = 'closed') {
 
     connectedCallback() {
       this._isMounted = true
-
-      if (!this._propsCheckedOnConnect) {
-        const currentProps = this._propsSignal()
-        const freshProps = this._propsManager.getInitialProps()
-        
-        let propsChanged = false
-        for (const [key, value] of Object.entries(freshProps)) {
-          if (currentProps[key] !== value) {
-            propsChanged = true
-            break
-          }
-        }
-        
-        if (propsChanged) {
-          this._setPropsSignal(freshProps)
-        }
-        this._propsCheckedOnConnect = true
-      }
 
       this._m?.forEach(cb => {
         try {

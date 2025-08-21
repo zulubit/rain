@@ -82,6 +82,53 @@ rain('user-card', {
 </user-card>
 ```
 
+### Script Placement with Props
+
+**Important**: When using components with props, script placement affects prop availability due to standard Web Components timing:
+
+```html
+<!-- ❌ Script in head - props show defaults -->
+<head>
+  <script src="rainwc.js"></script>
+  <script>
+    rain('my-component', { name: String }, function(props) {
+      return () => html`<div>Hello ${props().name}</div>`
+    })
+  </script>
+</head>
+<body>
+  <my-component name="Alice"></my-component> <!-- Shows "Hello " (default) -->
+</body>
+```
+
+```html
+<!-- ✅ Script after elements - props work correctly -->
+<head>
+  <script src="rainwc.js"></script>
+</head>
+<body>
+  <my-component name="Alice"></my-component> <!-- Shows "Hello Alice" -->
+  
+  <script>
+    rain('my-component', { name: String }, function(props) {
+      return () => html`<div>Hello ${props().name}</div>`
+    })
+  </script>
+</body>
+```
+
+**Why this happens**: This is standard Web Components behavior. When custom elements are defined after HTML parsing, the browser creates placeholder elements first, then upgrades them when the definition becomes available. During the upgrade, attributes aren't accessible in the constructor phase.
+
+**Solutions**:
+1. **Place scripts after HTML elements** (recommended)
+2. **Use computed props for reactivity** when needed:
+   ```javascript
+   rain('my-component', { name: String }, function(props) {
+     const name = $.computed(() => props().name)
+     return () => html`<div>Hello ${name}</div>`
+   })
+   ```
+
 ### Reactive Props
 
 Props are not reactive by default. To make them reactive, use `$.computed()`:
