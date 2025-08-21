@@ -14,7 +14,7 @@ const sharedConfig = {
 }
 
 async function buildLibrary() {
-  console.log('Building RainJS library...')
+  console.log('Building RainWC library...')
 
   // Clean dist directory
   try {
@@ -28,19 +28,19 @@ async function buildLibrary() {
     // ESM build for modern bundlers and Node.js
     await build({
       ...sharedConfig,
-      outfile: 'dist/rainjs.esm.js',
+      outfile: 'dist/rainwc.esm.js',
       format: 'esm',
       target: 'es2020',
       platform: 'neutral'
     })
-    console.log('ESM build complete: dist/rainjs.esm.js')
+    console.log('ESM build complete: dist/rainwc.esm.js')
 
     // UMD build for CDN usage
     await build({
       ...sharedConfig,
-      outfile: 'dist/rainjs.umd.js',
+      outfile: 'dist/rainwc.umd.js',
       format: 'iife',
-      globalName: 'RainJS',
+      globalName: 'RainWC',
       target: 'es2017',
       platform: 'browser',
       define: {
@@ -48,14 +48,14 @@ async function buildLibrary() {
         'global': 'globalThis'
       }
     })
-    console.log('UMD build complete: dist/rainjs.umd.js')
+    console.log('UMD build complete: dist/rainwc.umd.js')
 
     // Minified UMD build for CDN
     await build({
       ...sharedConfig,
-      outfile: 'dist/rainjs.umd.min.js',
+      outfile: 'dist/rainwc.umd.min.js',
       format: 'iife',
-      globalName: 'RainJS',
+      globalName: 'RainWC',
       target: 'es2017',
       platform: 'browser',
       minify: true,
@@ -64,17 +64,17 @@ async function buildLibrary() {
         'global': 'globalThis'
       }
     })
-    console.log('Minified UMD build complete: dist/rainjs.umd.min.js')
+    console.log('Minified UMD build complete: dist/rainwc.umd.min.js')
 
     console.log('Build complete! Ready for NPM and CDN distribution.')
     console.log('')
     console.log('NPM usage:')
-    console.log('  npm install rainjs-framework')
-    console.log('  import { rain, html, $ } from "rainjs-framework"')
+    console.log('  npm install rainwc')
+    console.log('  import { rain, html, $ } from "rainwc"')
     console.log('')
     console.log('CDN usage:')
-    console.log('  <script src="https://unpkg.com/rainjs-framework/dist/rainjs.umd.min.js"></script>')
-    console.log('  const { rain, html, $ } = RainJS')
+    console.log('  <script src="https://unpkg.com/rainwc/dist/rainwc.umd.min.js"></script>')
+    console.log('  const { rain, html, $ } = RainWC')
 
   } catch (error) {
     console.error('Build failed:', error)

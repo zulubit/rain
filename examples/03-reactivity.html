@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reactivity - RainJS</title>
+  <title>Reactivity - RainWC</title>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -41,9 +41,9 @@
     <effects-demo></effects-demo>
   </div>
 
-  <script src="./rainjs.umd.min.js"></script>
+  <script src="./rainwc.umd.min.js"></script>
   <script>
-    const { rain, html, $ } = RainJS
+    const { rain, html, $ } = RainWC
     
     // Basic signals
     rain('basic-signals', function() {
@@ -55,7 +55,7 @@
           <p>Count: ${count}</p>
           <p>Hello ${name}</p>
           <button @click=${() => setCount(count() + 1)}>+</button>
-          <button @click=${() => setName('RainJS')}>Change Name</button>
+          <button @click=${() => setName('RainWC')}>Change Name</button>
         </div>
       `
     })
@@ -81,7 +81,7 @@
     
     // Effects
     rain('effects-demo', function() {
-      const [title, setTitle] = $('RainJS')
+      const [title, setTitle] = $('RainWC')
       
       $.effect(() => {
         document.title = `${title()} - Reactivity Demo`

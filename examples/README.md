@@ -1,6 +1,6 @@
-# RainJS Examples
+# RainWC Examples
 
-Interactive examples and demos for RainJS framework.
+Interactive examples and demos for RainWC framework.
 
 ## Running Examples
 
@@ -46,7 +46,7 @@ Creates optimized production build in `dist/` folder.
 
 ## Development Notes
 
-- Examples import RainJS from `../src/` for development
-- In production, you would import from the npm package: `import { rain, html, $ } from 'rainjs'`
+- Examples import RainWC from `../src/` for development
+- In production, you would import from the npm package: `import { rain, html, $ } from 'rainwc'`
 - All examples use the new simplified CSS API
 - Examples demonstrate progressive enhancement patterns

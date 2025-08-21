@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Templates - RainJS</title>
+  <title>Templates - RainWC</title>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -46,9 +46,9 @@
     <keyed-list-demo></keyed-list-demo>
   </div>
 
-  <script src="./rainjs.umd.min.js"></script>
+  <script src="./rainwc.umd.min.js"></script>
   <script>
-    const { rain, html, $, match, list } = RainJS
+    const { rain, html, $, match, list } = RainWC
     
     // Dynamic content
     rain('dynamic-content', function() {
@@ -103,7 +103,7 @@
     // Keyed lists for smart reconciliation
     rain('keyed-list-demo', function() {
       const [todos, setTodos] = $([
-        { id: 1, text: 'Learn RainJS', done: false },
+        { id: 1, text: 'Learn RainWC', done: false },
         { id: 2, text: 'Build app', done: true },
         { id: 3, text: 'Deploy', done: false }
       ])

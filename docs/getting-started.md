@@ -1,13 +1,13 @@
 # Getting Started
 
-RainJS is a lightweight reactive Web Components framework. No build step required.
+RainWC is a lightweight reactive Web Components framework. No build step required.
 
 ## Your First Component
 
 ```html
-<script src="./rainjs.umd.min.js"></script>
+<script src="./rainwc.umd.min.js"></script>
 <script>
-const { rain, html, $ } = RainJS
+const { rain, html, $ } = RainWC
 
 // Simple counter
 rain('my-counter', function() {

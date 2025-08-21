@@ -1,14 +1,14 @@
 {
-  "name": "rainjs",
+  "name": "rainwc",
   "version": "0.0.1",
   "description": "Fine-grained reactive Web Components framework",
   "type": "module",
-  "main": "dist/rainjs.umd.js",
-  "module": "dist/rainjs.esm.js",
+  "main": "dist/rainwc.umd.js",
+  "module": "dist/rainwc.esm.js",
   "exports": {
     ".": {
-      "import": "./dist/rainjs.esm.js",
-      "require": "./dist/rainjs.umd.js"
+      "import": "./dist/rainwc.esm.js",
+      "require": "./dist/rainwc.umd.js"
     }
   },
   "files": [

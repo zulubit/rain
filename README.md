@@ -1,4 +1,4 @@
-# 🌧️ RainJS
+# 🌧️ RainWC
 
 A lightweight reactive Web Components framework with fine-grained reactivity and no build step required.
 
@@ -28,19 +28,19 @@ rain('my-counter', function() {
 ### NPM
 
 ```bash
-npm install rainjs
+npm install rainwc
 ```
 
 ```javascript
-import { rain, html, $ } from 'rainjs'
+import { rain, html, $ } from 'rainwc'
 ```
 
 ### CDN
 
 ```html
-<script src="https://unpkg.com/rainjs/dist/rainjs.umd.min.js"></script>
+<script src="https://unpkg.com/rainwc/dist/rainwc.umd.min.js"></script>
 <script>
-  const { rain, html, $ } = RainJS
+  const { rain, html, $ } = RainWC
 </script>
 ```
 
@@ -78,7 +78,7 @@ Browse the [examples](examples/) directory for working demos of all features.
 
 ## Acknowledgments
 
-RainJS is built on top of excellent open source libraries:
+RainWC is built on top of excellent open source libraries:
 
 - **[@preact/signals-core](https://github.com/preactjs/signals)** - Fine-grained reactivity system
 - **[HTM](https://github.com/developit/htm)** - JSX-like syntax using template literals

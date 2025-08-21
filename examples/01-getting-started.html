@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Getting Started - RainJS</title>
+  <title>Getting Started - RainWC</title>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -38,7 +38,7 @@
   </style>
 </head>
 <body>
-  <h1>🌧️ Getting Started with RainJS</h1>
+  <h1>🌧️ Getting Started with RainWC</h1>
   
   <div class="example">
     <h2>Simple Counter</h2>
@@ -73,7 +73,7 @@
 
   <div class="example">
     <h2>Shadow DOM Encapsulation</h2>
-    <p>RainJS uses <strong>closed shadow DOM</strong> by default for complete encapsulation. Use <code>rain.open()</code> when you need external JavaScript access.</p>
+    <p>RainWC uses <strong>closed shadow DOM</strong> by default for complete encapsulation. Use <code>rain.open()</code> when you need external JavaScript access.</p>
     
     <h3>Closed Shadow DOM (default)</h3>
     <closed-demo></closed-demo>
@@ -84,11 +84,11 @@
     <p><em>Components look identical, but check the browser console to see the difference in shadowRoot access!</em></p>
   </div>
 
-  <!-- Load RainJS from local build -->
-  <script src="./rainjs.umd.min.js"></script>
+  <!-- Load RainWC from local build -->
+  <script src="./rainwc.umd.min.js"></script>
   
   <script>
-    const { rain, html, $ } = RainJS
+    const { rain, html, $ } = RainWC
     
     // Simple counter component
     rain('my-counter', function() {
