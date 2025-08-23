@@ -22,9 +22,3 @@ export {
   onMounted,
   onUnmounted
 } from './component.js'
-
-export {
-  createLogger,
-  setLogLevel,
-  LogLevel
-} from './logger.js'

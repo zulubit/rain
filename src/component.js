@@ -4,10 +4,8 @@
  */
 
 import { html, render, $ } from './core.js'
-import { createLogger } from './logger.js'
+import { debugLog } from './utils.js'
 import { createPropsManager } from './props.js'
-
-const logger = createLogger('Component')
 
 /**
  * Logs component errors with contextual information
@@ -17,31 +15,15 @@ const logger = createLogger('Component')
  * @private
  */
 function logError(error, componentName, phase) {
-  const errorData = {
-    component: componentName,
-    phase,
-    message: error.message
-  }
-
-  if (error.stack) {
-    const relevantLine = error.stack.split('\n').find(
-      line => line.includes('.js') && !line.includes('node_modules') && !line.includes('htm')
-    )
-    if (relevantLine) {
-      const location = relevantLine.trim().split('@')[1] || relevantLine.trim()
-      errorData.location = location
-    }
-  }
-
-  logger.error(`Component error in ${componentName} during ${phase}`, errorData)
+  console.error(`Component error in ${componentName} during ${phase}:`, error)
 }
 
 /**
  * Validates rain component parameters
  * @param {string} name - Component name
- * @param {Object | Function} propDefs - Property definitions or factory function
+ * @param {Record<string, any> | Function} propDefs - Property definitions or factory function
  * @param {Function} [factory] - Factory function
- * @returns {{name: string, propDefs: Object, factory: Function}} Validated parameters
+ * @returns {{name: string, propDefs: Record<string, any>, factory: Function}} Validated parameters
  * @throws {Error} When component name is invalid or missing
  * @throws {Error} When factory function is invalid or missing
  * @private
@@ -102,9 +84,9 @@ function setupMemoryManagement(component) {
 /**
  * Creates the component class with all necessary methods
  * @param {string} name - Component name
- * @param {Object} propDefs - Property definitions
+ * @param {Record<string, any>} propDefs - Property definitions
  * @param {Function} factory - Factory function
- * @param {string} shadowMode - Shadow DOM mode ('open' or 'closed')
+ * @param {'open' | 'closed'} shadowMode - Shadow DOM mode
  * @returns {typeof HTMLElement} Component class
  * @private
  */
@@ -282,7 +264,7 @@ let currentInstance
  * Defines a reactive web component with built-in state management and styling
  * Uses closed shadow DOM by default for complete encapsulation
  * @param {string} name - Custom element tag name (must contain hyphen)
- * @param {Object | Function} propDefs - Property definitions object, or factory function
+ * @param {Record<string, any> | Function} propDefs - Property definitions object, or factory function
  * @param {Function} [factory] - Component factory function returning template function
  * @returns {boolean} True if component was successfully registered
  * @throws {Error} When name or factory is invalid
@@ -303,7 +285,7 @@ function rain(name, propDefs, factory) {
     const { name: validatedName, propDefs: validatedPropDefs, factory: validatedFactory } = validateRainParams(name, propDefs, factory)
 
     if (customElements.get(validatedName)) {
-      logger.warn(`Component '${validatedName}' already defined, skipping re-registration`)
+      debugLog('Component', `'${validatedName}' already defined, skipping`)
       return true
     }
 
@@ -311,7 +293,7 @@ function rain(name, propDefs, factory) {
     customElements.define(validatedName, ComponentClass)
     return true
   } catch (error) {
-    logger.error(`Failed to register component '${name}':`, error)
+    console.error(`Failed to register component '${name}':`, error)
     return false
   }
 }
@@ -319,7 +301,7 @@ function rain(name, propDefs, factory) {
 /**
  * Defines a reactive web component with open shadow DOM
  * @param {string} name - Custom element tag name (must contain hyphen)
- * @param {Object | Function} propDefs - Property definitions object, or factory function
+ * @param {Record<string, any> | Function} propDefs - Property definitions object, or factory function
  * @param {Function} [factory] - Component factory function returning template function
  * @returns {boolean} True if component was successfully registered
  * @throws {Error} When name or factory is invalid
@@ -333,7 +315,7 @@ rain.open = function(name, propDefs, factory) {
     const { name: validatedName, propDefs: validatedPropDefs, factory: validatedFactory } = validateRainParams(name, propDefs, factory)
 
     if (customElements.get(validatedName)) {
-      logger.warn(`Component '${validatedName}' already defined, skipping re-registration`)
+      debugLog('Component', `'${validatedName}' already defined, skipping`)
       return true
     }
 
@@ -341,7 +323,7 @@ rain.open = function(name, propDefs, factory) {
     customElements.define(validatedName, ComponentClass)
     return true
   } catch (error) {
-    logger.error(`Failed to register component '${name}':`, error)
+    console.error(`Failed to register component '${name}':`, error)
     return false
   }
 }
@@ -351,13 +333,13 @@ rain.open = function(name, propDefs, factory) {
  * @param {() => void} cb - Callback function to execute
  * @example
  * rain('my-component', function() {
- *   onMounted(() => logger.info('Component mounted'));
+ *   onMounted(() => console.log('Component mounted'));
  *   return () => html`<div>Hello</div>`;
  * });
  */
 function onMounted(cb) {
   if (!currentInstance) {
-    logger.warn('onMounted called outside component factory')
+    console.warn('onMounted called outside component factory')
     return
   }
   (currentInstance._m ||= []).push(cb)
@@ -368,13 +350,13 @@ function onMounted(cb) {
  * @param {() => void} cb - Callback function to execute
  * @example
  * rain('my-component', function() {
- *   onUnmounted(() => logger.info('Component unmounted'));
+ *   onUnmounted(() => console.log('Component unmounted'));
  *   return () => html`<div>Hello</div>`;
  * });
  */
 function onUnmounted(cb) {
   if (!currentInstance) {
-    logger.warn('onUnmounted called outside component factory')
+    console.warn('onUnmounted called outside component factory')
     return
   }
   (currentInstance._um ||= []).push(cb)

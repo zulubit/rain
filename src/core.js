@@ -5,11 +5,7 @@
 
 import htm from 'htm'
 import { signal, computed, effect } from '@preact/signals-core'
-import { isDebugEnabled, isSignal } from './utils.js'
-import { createLogger } from './logger.js'
-
-const logger = createLogger('Core')
-const listLogger = createLogger('List')
+import { isSignal, debugLog } from './utils.js'
 
 const SIGNAL_SYMBOL = Symbol('rain.signal')
 
@@ -160,8 +156,6 @@ function processChild(element, child) {
     })
   } else if (child instanceof Node) {
     element.appendChild(child)
-  } else {
-    logger.warn('Unknown child type', { type: typeof child, value: child })
   }
 }
 
@@ -190,7 +184,9 @@ const getInstanceKey = () => `__rain_instance_${++instanceCounter}`
 /**
  * HTM template function for creating reactive DOM elements
  * Automatically adds cache-busting for component isolation
- * @type {(strings: TemplateStringsArray, ...values: any[]) => Element}
+ * @param {TemplateStringsArray} strings - Template string array
+ * @param {...any} values - Template interpolation values
+ * @returns {Element} Created DOM element
  * @example html`<div>Hello ${name}</div>`
  */
 function html(strings, ...values) {
@@ -204,9 +200,11 @@ function html(strings, ...values) {
 /**
  * Renders conditional content based on signal value with smart matching
  * @param {() => any} valueSignal - Signal function containing the value to match against
- * @param {Object<string|number, () => Element>} cases - Object mapping values to render functions
+ * @param {Record<string|number, () => Element>} cases - Object mapping values to render functions
  * @param {() => Element} [fallback] - Optional fallback render function for unmatched values
  * @returns {Element} Container element with conditionally rendered content
+ * @throws {Error} When valueSignal is not a signal function
+ * @throws {Error} When cases is not an object
  * @example
  * // Basic usage
  * match(status, {
@@ -258,7 +256,7 @@ function match(valueSignal, cases, fallback) {
         container.appendChild(element)
         currentElement = element
       } catch (error) {
-        logger.error('match() render function failed:', error)
+        console.error('match() render function failed:', error)
         const errorElement = document.createTextNode('Match render error')
         container.appendChild(errorElement)
         currentElement = errorElement
@@ -279,6 +277,7 @@ function match(valueSignal, cases, fallback) {
  * @param {(item: any, index: number) => Element} renderFn - Function to render each item
  * @param {(item: any, index: number) => string | number} [keyFn] - Optional key extraction function
  * @returns {Element} Container element with rendered list items
+ * @throws {Error} When renderFn doesn't return a DOM Node
  * @example
  * // With keyed reconciliation (recommended)
  * list(items, item => html`<li>${item.name}</li>`, item => item.id)
@@ -300,12 +299,6 @@ function list(itemsSignal, renderFn, keyFn) {
       const items = itemsSignal() // Always expect $() tuple function
       if (!Array.isArray(items)) return
 
-      listLogger.debug('List reconciliation triggered', {
-        itemCount: items.length,
-        containerChildren: container.children.length,
-        hasParent: !!container.parentNode
-      })
-
       if (items.length === 0) {
         for (const [, node] of nodeMap) {
           if (node.parentNode === container) {
@@ -321,7 +314,7 @@ function list(itemsSignal, renderFn, keyFn) {
       const uniqueKeys = new Set(keys).size === keys.length
 
       if (!validKeys || !uniqueKeys) {
-        listLogger.warn('Invalid or duplicate keys detected, falling back to full re-render')
+        debugLog('List', 'Invalid keys, falling back to full re-render')
         Array.from(container.children).forEach(child => child.remove())
         nodeMap.clear()
         items.forEach((item, index) => {
@@ -335,22 +328,6 @@ function list(itemsSignal, renderFn, keyFn) {
       }
 
       const usedNodes = new Set()
-      let created = 0
-      let moved = 0
-      let removed = 0
-
-      const shouldLogDetails = isDebugEnabled() && window.RAIN_LOG_LEVEL >= 3
-
-      if (shouldLogDetails) {
-        listLogger.group('Smart reconciliation starting')
-        listLogger.debug('Reconciliation state', {
-          itemCount: items.length,
-          domChildren: container.children.length,
-          keyCount: keys.length
-        })
-      }
-
-      const reconcileStart = performance.now()
 
       const desiredNodes = []
       items.forEach((item, index) => {
@@ -365,7 +342,6 @@ function list(itemsSignal, renderFn, keyFn) {
             throw new Error(`renderFn must return a DOM Node, got ${typeof node}`)
           }
           nodeMap.set(key, node)
-          created++
         }
 
         desiredNodes.push(node)
@@ -373,27 +349,14 @@ function list(itemsSignal, renderFn, keyFn) {
 
       const currentNodes = Array.from(container.children)
 
-      if (shouldLogDetails) {
-        listLogger.debug('Node reconciliation', {
-          desired: desiredNodes.length,
-          current: currentNodes.length
-        })
-      }
-
       currentNodes.forEach(node => {
         if (node.parentNode === container) {
           container.removeChild(node)
         }
       })
 
-      desiredNodes.forEach((node, _i) => {
+      desiredNodes.forEach(node => {
         container.appendChild(node)
-        const wasInCurrentNodes = currentNodes.includes(node)
-        if (wasInCurrentNodes) {
-          moved++
-        } else {
-          // This is a newly created node (already counted above)
-        }
       })
 
       for (const [key, node] of nodeMap) {
@@ -402,16 +365,7 @@ function list(itemsSignal, renderFn, keyFn) {
             node.remove()
           }
           nodeMap.delete(key)
-          removed++
         }
-      }
-
-      if (shouldLogDetails) {
-        listLogger.perf('Smart reconciliation', reconcileStart, {
-          operations: { created, moved, removed },
-          finalChildren: container.children.length
-        })
-        listLogger.groupEnd()
       }
     })
   } else {
@@ -474,7 +428,6 @@ function render(elementOrFn, container) {
     }
   }
 
-  logger.error('render() expects a DOM node or function returning DOM node')
   return { dispose: () => { } }
 }
 
@@ -509,7 +462,7 @@ function $(initialValue) {
  * @returns {() => T} Read-only computed accessor function
  * @throws {Error} When computation is not a function
  * @example
- * const count = $(0);
+ * const [count] = $(0);
  * const doubled = $.computed(() => count() * 2);
  * const fullName = $.computed(() => `${firstName()} ${lastName()}`);
  */
@@ -527,9 +480,11 @@ $.computed = function(computation) {
  * Creates an effect that runs when dependencies change
  * @param {() => void} fn - Side effect function
  * @returns {() => void} Effect cleanup function
+ * @throws {Error} When fn is not a function
  * @example
  * const [count] = $(0);
- * $.effect(() => document.title = `Count: ${count()}`);
+ * const cleanup = $.effect(() => document.title = `Count: ${count()}`);
+ * // Call cleanup() when no longer needed
  */
 $.effect = function(fn) {
   if (typeof fn !== 'function') {
@@ -544,8 +499,11 @@ $.effect = function(fn) {
  * @param {(event: CustomEvent) => void} handler - Event handler function
  * @param {EventTarget} [target=document] - Target to listen on
  * @returns {() => void} Cleanup function
+ * @throws {Error} When eventName is not a string
+ * @throws {Error} When handler is not a function
  * @example
- * $.listen('user-changed', (e) => setUser(e.detail))
+ * const cleanup = $.listen('user-changed', (e) => setUser(e.detail));
+ * // Call cleanup() when no longer needed
  */
 $.listen = function(eventName, handler, target = document) {
   if (typeof eventName !== 'string') {
@@ -567,6 +525,7 @@ $.listen = function(eventName, handler, target = document) {
  * @param {string} eventName - Name of the event to emit
  * @param {any} [detail] - Event detail data
  * @param {EventTarget} [target] - Target to emit from (defaults to current component or document)
+ * @throws {Error} When eventName is not a string
  * @example
  * $.emit('value-changed', { value: newValue })
  */
@@ -592,7 +551,7 @@ $.emit = function(eventName, detail, target) {
  * @param {TemplateStringsArray} strings - Template string parts
  * @param {...any} values - Template interpolation values
  * @returns {() => Element} Computed signal returning reactive style element
- * @throws {Error} When template contains invalid CSS
+ * @throws {Error} When not used as a template literal
  * @example
  * const styles = css`
  *   .container {

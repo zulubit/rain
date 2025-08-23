@@ -382,7 +382,6 @@ Enable debug logging:
 
 ```javascript
 window.RAIN_DEBUG = true
-window.RAIN_LOG_LEVEL = 3  // 0=ERROR, 1=WARN, 2=INFO, 3=DEBUG
 ```
 
 ## Performance

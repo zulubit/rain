@@ -3,10 +3,6 @@
  * @version 0.0.5
  */
 
-import { createLogger } from './logger.js'
-
-const logger = createLogger('Props')
-
 /**
  * Type coercion functions for converting string attributes to typed values
  */
@@ -34,7 +30,7 @@ const coercers = {
         try {
           return JSON.parse(value)
         } catch {
-          logger.warn('Invalid JSON for Object prop:', value)
+          console.warn('Invalid JSON for Object prop:', value)
           return null
         }
       }
@@ -51,7 +47,7 @@ const coercers = {
         try {
           return JSON.parse(value)
         } catch {
-          logger.warn('Invalid JSON for Array prop:', value)
+          console.warn('Invalid JSON for Array prop:', value)
           return []
         }
       }
@@ -80,8 +76,8 @@ export class PropsManager {
 
   /**
    * Normalize prop definitions from shorthand to full format
-   * @param {Object} defs - Prop definitions
-   * @returns {Object} Normalized definitions
+   * @param {Record<string, any>} defs - Prop definitions
+   * @returns {Record<string, any>} Normalized definitions
    */
   normalizePropDefs(defs) {
     const normalized = {}
@@ -116,7 +112,7 @@ export class PropsManager {
 
   /**
    * Get initial prop values from element attributes and properties
-   * @returns {Object} Initial prop values
+   * @returns {Record<string, any>} Initial prop values
    */
   getInitialProps() {
     const props = {}
@@ -183,22 +179,22 @@ export class PropsManager {
    * Validate a prop value
    * @param {string} name - Prop name
    * @param {any} value - Prop value
-   * @param {Object} def - Prop definition
+   * @param {Record<string, any>} def - Prop definition
    */
   validateProp(name, value, def) {
     // Check required
     if (def.required && (value == null || value === '')) {
-      logger.error(`Required prop '${name}' is missing on ${this.element.tagName}`)
+      console.error(`Required prop '${name}' is missing on ${this.element.tagName}`)
     }
 
     // Run custom validator
     if (def.validator && value != null) {
       try {
         if (!def.validator(value)) {
-          logger.warn(`Prop '${name}' failed validation:`, value)
+          console.warn(`Prop '${name}' failed validation:`, value)
         }
       } catch (error) {
-        logger.error(`Validator error for prop '${name}':`, error)
+        console.error(`Validator error for prop '${name}':`, error)
       }
     }
   }
@@ -251,7 +247,7 @@ export class PropsManager {
 
 /**
  * Create a props manager for a component
- * @param {Object} propDefs - Property definitions
+ * @param {Record<string, any>} propDefs - Property definitions
  * @param {HTMLElement} element - Component element
  * @returns {PropsManager} Props manager instance
  */

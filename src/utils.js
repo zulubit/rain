@@ -1,5 +1,5 @@
 /**
- * @fileoverview RainJS Utilities - Shared utility functions across the framework
+ * @fileoverview RainWC Utilities - Shared utility functions across the framework
  * @version 0.0.5
  */
 
@@ -8,6 +8,18 @@
  * @returns {boolean} True if debug logging is enabled
  */
 export const isDebugEnabled = () => typeof window !== 'undefined' && window.RAIN_DEBUG
+
+/**
+ * Simple debug logging helper
+ * @param {string} namespace - Debug namespace
+ * @param {string} message - Debug message
+ * @param {any} [data] - Optional debug data
+ */
+export function debugLog(namespace, message, data) {
+  if (isDebugEnabled()) {
+    console.log(`[Rain:${namespace}] ${message}`, data || '')
+  }
+}
 
 /**
  * Checks if a value is a Preact signal
