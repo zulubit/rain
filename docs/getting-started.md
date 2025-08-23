@@ -5,9 +5,8 @@ RainWC is a lightweight reactive Web Components framework. No build step require
 ## Your First Component
 
 ```html
-<script src="./rainwc.umd.min.js"></script>
-<script>
-const { rain, html, $ } = RainWC
+<script type="module">
+import { rain, html, $ } from './rainwc.esm.min.js'
 
 // Simple counter
 rain('my-counter', function() {

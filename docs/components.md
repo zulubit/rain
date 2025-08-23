@@ -89,8 +89,9 @@ rain('user-card', {
 ```html
 <!-- ❌ Script in head - props show defaults -->
 <head>
-  <script src="rainwc.js"></script>
-  <script>
+  <script type="module">
+    import { rain, html, $ } from './rainwc.esm.min.js'
+    
     rain('my-component', { name: String }, function(props) {
       return () => html`<div>Hello ${props().name}</div>`
     })
@@ -103,13 +104,12 @@ rain('user-card', {
 
 ```html
 <!-- ✅ Script after elements - props work correctly -->
-<head>
-  <script src="rainwc.js"></script>
-</head>
 <body>
   <my-component name="Alice"></my-component> <!-- Shows "Hello Alice" -->
   
-  <script>
+  <script type="module">
+    import { rain, html, $ } from './rainwc.esm.min.js'
+    
     rain('my-component', { name: String }, function(props) {
       return () => html`<div>Hello ${props().name}</div>`
     })
@@ -417,9 +417,9 @@ rain('styled-component', function() {
 })
 ```
 
-### Reactive CSS with $.css
+### Reactive CSS with css
 
-For reactive styling, use the `$.css` template literal to create computed style elements:
+For reactive styling, use the `css` template literal to create computed style elements:
 
 ```javascript
 rain('theme-card', {
@@ -429,7 +429,7 @@ rain('theme-card', {
     props().theme === 'dark' ? '#333' : '#fff'
   )
   
-  const styles = $.css`
+  const styles = css`
     .card {
       background: ${bgColor};
       color: ${$.computed(() => props().theme === 'dark' ? '#fff' : '#333')};

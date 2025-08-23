@@ -35,7 +35,18 @@ async function buildLibrary() {
     })
     console.log('ESM build complete: dist/rainwc.esm.js')
 
-    // UMD build for CDN usage
+    // Minified ESM build for modern CDN usage
+    await build({
+      ...sharedConfig,
+      outfile: 'dist/rainwc.esm.min.js',
+      format: 'esm',
+      target: 'es2020',
+      platform: 'neutral',
+      minify: true
+    })
+    console.log('Minified ESM build complete: dist/rainwc.esm.min.js')
+
+    // UMD build for legacy CDN usage
     await build({
       ...sharedConfig,
       outfile: 'dist/rainwc.umd.js',
@@ -70,11 +81,16 @@ async function buildLibrary() {
     console.log('')
     console.log('NPM usage:')
     console.log('  npm install rainwc')
-    console.log('  import { rain, html, $ } from "rainwc"')
+    console.log('  import { rain, html, $, css } from "rainwc"')
     console.log('')
-    console.log('CDN usage:')
+    console.log('CDN usage (ESM - recommended):')
+    console.log('  <script type="module">')
+    console.log('    import { rain, html, $, css } from "https://unpkg.com/rainwc/dist/rainwc.esm.min.js"')
+    console.log('  </script>')
+    console.log('')
+    console.log('CDN usage (UMD - legacy fallback):')
     console.log('  <script src="https://unpkg.com/rainwc/dist/rainwc.umd.min.js"></script>')
-    console.log('  const { rain, html, $ } = RainWC')
+    console.log('  <script>const { rain, html, $, css } = RainWC</script>')
 
   } catch (error) {
     console.error('Build failed:', error)

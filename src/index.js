@@ -10,7 +10,8 @@ export {
   html,
   render,
   list,
-  match
+  match,
+  css
 } from './core.js'
 
 export {

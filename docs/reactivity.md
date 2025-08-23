@@ -138,7 +138,7 @@ $.effect(() => {
 
 ## Reactive CSS
 
-The `$.css` template literal creates reactive stylesheets:
+The `css` template literal creates reactive stylesheets:
 
 ```javascript
 rain('reactive-styles', function() {
@@ -148,7 +148,7 @@ rain('reactive-styles', function() {
     theme() === 'dark' ? '#333' : '#fff'
   )
   
-  const styles = $.css`
+  const styles = css`
     .container {
       background: ${bgColor};
       color: ${$.computed(() => theme() === 'dark' ? '#fff' : '#333')};

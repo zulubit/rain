@@ -79,7 +79,7 @@ $.emit('custom-event', { data: 'value' }, element)
 - `detail?: any` - event detail data (optional)
 - `target?: EventTarget` - target to emit from (defaults to document)
 
-### `$.css`
+### `css`
 Creates reactive CSS stylesheets using template literals.
 
 ```javascript
@@ -90,7 +90,7 @@ rain('styled-component', function() {
     theme() === 'dark' ? '#333' : '#fff'
   )
   
-  const styles = $.css`
+  const styles = css`
     .container {
       background: ${bgColor};
       padding: 1rem;
@@ -114,7 +114,7 @@ rain('styled-component', function() {
 **Returns**: `() => Element` - computed signal returning `<style>` element
 
 **Notes**:
-- Must be used as template literal: `$.css\`...\``
+- Must be used as template literal: `css\`...\``
 - Supports reactive values through computed signals
 - Returns new `<style>` element on each call
 - CSS is automatically scoped within Shadow DOM

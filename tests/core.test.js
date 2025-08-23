@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { $, html, render, list, match } from '../src/core.js'
+import { $, html, render, list, match, css } from '../src/core.js'
 
 describe('core.js', () => {
   describe('$ (signal creation)', () => {
@@ -269,12 +269,12 @@ describe('core.js', () => {
     })
   })
 
-  describe('$.css', () => {
+  describe('css', () => {
     it('should create reactive CSS style element', () => {
       const [theme, setTheme] = $('light')
       const bgColor = $.computed(() => theme() === 'dark' ? '#333' : '#fff')
       
-      const styles = $.css`
+      const styles = css`
         .container {
           background: ${bgColor};
         }
@@ -291,7 +291,7 @@ describe('core.js', () => {
     })
 
     it('should handle static CSS', () => {
-      const styles = $.css`
+      const styles = css`
         .button { 
           padding: 1rem; 
           border: none;
@@ -305,8 +305,8 @@ describe('core.js', () => {
 
     it('should throw for non-template literal usage', () => {
       expect(() => {
-        $.css('.invalid { color: red; }')
-      }).toThrow('$.css must be used as a template literal')
+        css('.invalid { color: red; }')
+      }).toThrow('css must be used as a template literal')
     })
   })
 

@@ -48,7 +48,7 @@
 
   <script src="./rainwc.umd.min.js"></script>
   <script>
-    const { rain, html, $ } = RainWC
+    const { rain, html, $, css } = RainWC
     
     // Basic signals
     rain('basic-signals', function() {
@@ -109,7 +109,7 @@
         theme() === 'dark' ? '#333' : '#fff'
       )
       
-      const styles = $.css`
+      const styles = css`
         .container {
           background: ${bgColor};
           color: ${$.computed(() => theme() === 'dark' ? '#fff' : '#333')};

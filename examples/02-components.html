@@ -50,7 +50,7 @@
 
   <script src="./rainwc.umd.min.js"></script>
   <script>
-    const { rain, html, $, onMounted, onUnmounted } = RainWC
+    const { rain, html, $, css, onMounted, onUnmounted } = RainWC
     console.log('RainWC loaded:', { rain, html, $ })
     
     // Child component
@@ -124,7 +124,7 @@
         props().theme === 'dark' ? '#333' : '#fff'
       )
       
-      const styles = $.css`
+      const styles = css`
         .card {
           background: ${bgColor};
           color: ${$.computed(() => props().theme === 'dark' ? '#fff' : '#333')};

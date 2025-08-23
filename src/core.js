@@ -181,7 +181,6 @@ function isReactive(value) {
  */
 const htmBound = htm.bind(h)
 
-
 /**
  * Generate a unique cache-busting key for component instances
  */
@@ -595,29 +594,29 @@ $.emit = function(eventName, detail, target) {
  * @returns {() => Element} Computed signal returning reactive style element
  * @throws {Error} When template contains invalid CSS
  * @example
- * const styles = $.css`
- *   .container { 
- *     background: ${theme() === 'dark' ? '#333' : '#fff'}; 
+ * const styles = css`
+ *   .container {
+ *     background: ${theme() === 'dark' ? '#333' : '#fff'};
  *   }
  * `
  */
-$.css = function(strings, ...values) {
+export function css(strings, ...values) {
   if (!Array.isArray(strings)) {
-    throw new Error('$.css must be used as a template literal')
+    throw new Error('css must be used as a template literal')
   }
 
   return $.computed(() => {
-    let css = ''
+    let cssText = ''
     for (let i = 0; i < strings.length; i++) {
-      css += strings[i]
+      cssText += strings[i]
       if (i < values.length) {
         const value = values[i]
-        css += typeof value === 'function' && value[SIGNAL_SYMBOL] ? value() : value
+        cssText += typeof value === 'function' && value[SIGNAL_SYMBOL] ? value() : value
       }
     }
 
     const style = document.createElement('style')
-    style.textContent = css
+    style.textContent = cssText
     return style
   })
 }

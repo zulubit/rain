@@ -32,15 +32,14 @@ npm install rainwc
 ```
 
 ```javascript
-import { rain, html, $ } from 'rainwc'
+import { rain, html, $, css } from 'rainwc'
 ```
 
 ### CDN
 
 ```html
-<script src="https://unpkg.com/rainwc/dist/rainwc.umd.min.js"></script>
-<script>
-  const { rain, html, $ } = RainWC
+<script type="module">
+  import { rain, html, $, css } from 'https://unpkg.com/rainwc/dist/rainwc.esm.min.js'
 </script>
 ```
 
