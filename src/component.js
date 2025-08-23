@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS Component System - Web Components with reactive templates
- * @version 0.0.5
+ * @version 0.0.6
  */
 
 import { html, render, $ } from './core.js'

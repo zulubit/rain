@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainWC Utilities - Shared utility functions across the framework
- * @version 0.0.5
+ * @version 0.0.6
  */
 
 /**
