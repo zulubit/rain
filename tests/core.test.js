@@ -389,4 +389,21 @@ describe('core.js', () => {
       expect(el.children[2].textContent).toBe('2: c')
     })
   })
+
+  describe('$.getSlots', () => {
+    it('should throw error when called outside light DOM component', () => {
+      expect(() => {
+        $.getSlots()
+      }).toThrow('$.getSlots can only be called within a light DOM component factory')
+    })
+
+    it('should be a function', () => {
+      expect(typeof $.getSlots).toBe('function')
+    })
+
+    it('should exist on $ object', () => {
+      expect($.getSlots).toBeDefined()
+      expect($.getSlots).toBeInstanceOf(Function)
+    })
+  })
 })

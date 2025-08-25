@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,20 +13,29 @@
       padding: 2rem;
       background: #f5f5f5;
     }
+
     .example {
       background: white;
       padding: 1.5rem;
       border-radius: 8px;
       margin: 1rem 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    h1 { color: #333; }
-    h2 { color: #666; margin-top: 2rem; }
+
+    h1 {
+      color: #333;
+    }
+
+    h2 {
+      color: #666;
+      margin-top: 2rem;
+    }
   </style>
 </head>
+
 <body>
   <h1>🌧️ Light DOM Components</h1>
-  
+
   <div class="example">
     <h2>Light DOM with CSS Function</h2>
     <my-light-card title="Light DOM Card"></my-light-card>
@@ -44,21 +54,27 @@
   </div>
 
   <div class="example">
-    <h2>Slots in Light DOM</h2>
+    <h2>Slots in Light DOM ($.getSlots())</h2>
     <my-light-slot-card>
+      <h2 slot="header">Custom Header!</h2>
       <p slot="content">This content is slotted into the light DOM component!</p>
-      <p slot="content">Multiple elements can be slotted.</p>
+      <p slot="content">Multiple elements can be slotted in the same slot.</p>
+      <button slot="footer">Custom Footer Button</button>
+    </my-light-slot-card>
+
+    <my-light-slot-card>
+      <p>This goes to default slot (no slot attribute)</p>
     </my-light-slot-card>
   </div>
-  
+
   <script src="./rainwc.umd.min.js"></script>
   <script>
-    const { rain, html, dangerouslySetInnerHTML, css } = RainWC
-    
+    const {rain, $, html, dangerouslySetInnerHTML, css} = RainWC
+
     // Shadow DOM component (default)
     rain('my-shadow-card', {
-      title: { type: String, default: 'Default Title' }
-    }, function(props) {
+      title: {type: String, default: 'Default Title'}
+    }, function (props) {
       return () => html`
         <style>
           .card {
@@ -74,11 +90,11 @@
         </div>
       `
     })
-    
+
     // Light DOM component with css() function  
     rain.light('my-light-card', {
-      title: { type: String, default: 'Default Title' }
-    }, function(props) {
+      title: {type: String, default: 'Default Title'}
+    }, function (props) {
       const styles = css`
         .light-card {
           border: 2px solid green;
@@ -87,7 +103,7 @@
           background: lightgreen;
         }
       `
-      
+
       return () => html`
         <div>
           ${styles}
@@ -98,11 +114,11 @@
         </div>
       `
     })
-    
+
     // Light DOM component with manual style insertion
     rain.light('my-light-manual', {
-      title: { type: String, default: 'Default Title' }
-    }, function(props) {
+      title: {type: String, default: 'Default Title'}
+    }, function (props) {
       return () => html`
         <div>
           ${dangerouslySetInnerHTML(`
@@ -122,9 +138,11 @@
         </div>
       `
     })
-    
-    // Light DOM component with slots
-    rain.light('my-light-slot-card', function() {
+
+    // Light DOM component with $.getSlots()
+    rain.light('my-light-slot-card', function () {
+      const slots = $.getSlots()
+
       return () => html`
         <div>
           ${dangerouslySetInnerHTML(`
@@ -135,12 +153,20 @@
                 margin: 0.5rem 0;
                 background: lavender;
               }
+              .slot-card .header { font-weight: bold; color: purple; }
+              .slot-card .content { margin: 0.5rem 0; }
+              .slot-card .footer { font-style: italic; }
             </style>
           `)}
           <div class="slot-card">
-            <h3>Light DOM with Slots</h3>
-            <div>
-              <slot name="content">Default slot content</slot>
+            <div class="header">
+              ${slots.header || html`<h3>Default Header</h3>`}
+            </div>
+            <div class="content">
+              ${slots.content || slots.default || html`<p>No content provided</p>`}
+            </div>
+            <div class="footer">
+              ${slots.footer || html`<small>Default footer</small>`}
             </div>
           </div>
         </div>
@@ -148,4 +174,5 @@
     })
   </script>
 </body>
+
 </html>

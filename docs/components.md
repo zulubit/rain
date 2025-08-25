@@ -296,6 +296,84 @@ return () => html`
 `
 ```
 
+## Light DOM Slot Emulation
+
+Light DOM components can emulate slot behavior using `$.getSlots()`:
+
+```javascript
+rain.light('light-modal', {
+  title: { type: String, default: 'Modal' },
+  open: { type: Boolean, default: false }
+}, function(props) {
+  const slots = $.getSlots()  // Capture slotted content
+  
+  return () => html`
+    <div>
+      ${dangerouslySetInnerHTML(`
+        <style>
+          .modal { display: ${props().open ? 'block' : 'none'}; }
+          .modal-header { font-weight: bold; border-bottom: 1px solid #ccc; }
+          .modal-body { padding: 1rem 0; }
+          .modal-footer { border-top: 1px solid #ccc; padding-top: 0.5rem; }
+        </style>
+      `)}
+      <div class="modal">
+        <div class="modal-header">
+          <h2>${props().title}</h2>
+          ${slots.headerActions || ''}
+        </div>
+        <div class="modal-body">
+          ${slots.content || slots.default || html`<p>No content provided</p>`}
+        </div>
+        <div class="modal-footer">
+          ${slots.footer || html`<button>Close</button>`}
+        </div>
+      </div>
+    </div>
+  `
+})
+```
+
+Usage with slotted content:
+
+```html
+<light-modal title="Confirm Action" open>
+  <button slot="headerActions">×</button>
+  
+  <div slot="content">
+    <p>Are you sure you want to proceed?</p>
+    <p><strong>This action cannot be undone.</strong></p>
+  </div>
+  
+  <div slot="footer">
+    <button onclick="confirm()">Yes</button>
+    <button onclick="cancel()">No</button>
+  </div>
+</light-modal>
+```
+
+### Key Differences from Shadow DOM Slots
+
+- **Slot capture**: `$.getSlots()` captures content at component creation time
+- **Manual rendering**: Developer controls where slots are rendered in template
+- **No automatic projection**: Content doesn't automatically flow to slots
+- **Fallback handling**: Use `||` operator for fallback content
+- **Light DOM only**: Function only available in `rain.light()` components
+
+### Multiple Elements in Same Slot
+
+Multiple elements with the same slot name are grouped together:
+
+```html
+<my-component>
+  <p slot="content">First paragraph</p>
+  <p slot="content">Second paragraph</p>
+  <span slot="content">And a span</span>
+</my-component>
+```
+
+All three elements will be available in `slots.content` as a DocumentFragment.
+
 ## Nested Components
 
 Components can contain other components:

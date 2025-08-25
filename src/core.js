@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS Core - Reactive template system with HTM and Preact signals
- * @version 0.0.7
+ * @version 0.0.8
  */
 
 import htm from 'htm'
@@ -531,6 +531,24 @@ $.emit = function(eventName, detail, target) {
   })
 
   emitter.dispatchEvent(event)
+}
+
+/**
+ * Get slotted content for light DOM components
+ * Organizes child elements by their slot attribute names
+ * @returns {Record<string, DocumentFragment>} Object mapping slot names to content fragments
+ * @throws {Error} When called outside a light DOM component factory
+ * @example
+ * rain.light('my-component', function() {
+ *   const slots = $.getSlots()
+ *   return () => html`
+ *     <div class="header">${slots.header || html`<h2>Default</h2>`}</div>
+ *     <div class="content">${slots.default || 'No content'}</div>
+ *   `
+ * })
+ */
+$.getSlots = function() {
+  throw new Error('$.getSlots can only be called within a light DOM component factory')
 }
 
 /**

@@ -231,6 +231,25 @@ return () => html`
 `
 ```
 
+### Light DOM with Slot Emulation
+```javascript
+// Light DOM component with slot emulation
+rain.light('my-light-component', function() {
+  const slots = $.getSlots()  // Capture slotted content
+  
+  return () => html`
+    <div>
+      ${dangerouslySetInnerHTML('<style>.card { padding: 1rem; }</style>')}
+      <div class="card">
+        <header>${slots.header || html`<h2>Default Header</h2>`}</header>
+        <main>${slots.content || slots.default || 'No content'}</main>
+        <footer>${slots.footer || html`<small>Default footer</small>`}</footer>
+      </div>
+    </div>
+  `
+})
+```
+
 ## Component Communication
 
 ### Custom Events
@@ -269,6 +288,47 @@ const cleanup = $.listen('user-login', (e) => {
 })
 // cleanup() when no longer needed
 ```
+
+### Light DOM Slot Emulation with $.getSlots()
+
+Light DOM components can use `$.getSlots()` to emulate slot functionality:
+
+```javascript
+// Light DOM component with slot emulation
+rain.light('my-slot-card', function() {
+  const slots = $.getSlots()  // Must be called inside light DOM component factory
+  
+  return () => html`
+    <div class="card">
+      <div class="header">
+        ${slots.header || html`<h3>Default Header</h3>`}
+      </div>
+      <div class="content">
+        ${slots.content || slots.default || html`<p>No content provided</p>`}
+      </div>
+      <div class="footer">
+        ${slots.footer || html`<small>Default footer</small>`}
+      </div>
+    </div>
+  `
+})
+```
+
+Usage with slotted content:
+```html
+<my-slot-card>
+  <h2 slot="header">Custom Header</h2>
+  <p slot="content">This goes in the content slot</p>
+  <button slot="footer">Custom Footer Button</button>
+</my-slot-card>
+
+<!-- Elements without slot attribute go to 'default' slot -->
+<my-slot-card>
+  <p>This goes to default slot</p>
+</my-slot-card>
+```
+
+**Important**: `$.getSlots()` only works in light DOM components (`rain.light()`) and must be called within the component factory function.
 
 ## Lifecycle Hooks
 
@@ -617,5 +677,6 @@ rain('error-prone', function() {
 8. **List Keys**: Prefer keyed lists for dynamic content: `list(items, renderFn, keyFn)`
 9. **Style Encapsulation**: Use `css` template literal or `<style>` tags in shadow DOM
 10. **Event Communication**: Use `this.emit()` and `$.listen()` for component communication
+11. **Light DOM Slots**: Use `$.getSlots()` only in light DOM components for slot emulation
 
 This reference covers all essential patterns for generating correct RainWC code.
