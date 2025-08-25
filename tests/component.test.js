@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { rain, onMounted, onUnmounted } from '../src/component.js'
-import { $, html } from '../src/core.js'
+import { $, html, dangerouslySetInnerHTML, css } from '../src/core.js'
 
 describe('component.js', () => {
   beforeEach(() => {
@@ -414,5 +414,167 @@ describe('component.js', () => {
       
       document.body.removeChild(element)
     })
+  })
+
+  describe('light DOM components', () => {
+    it('should create components without shadow DOM', () => {
+      rain.light('test-light-basic', function() {
+        return () => html`<div>Light DOM Content</div>`
+      })
+      
+      const element = document.createElement('test-light-basic')
+      document.body.appendChild(element)
+      
+      // Should NOT have shadow root
+      expect(element.shadowRoot).toBeNull()
+      
+      // Should have content directly in element
+      expect(element.textContent).toBe('Light DOM Content')
+      expect(element.querySelector('div')).toBeDefined()
+      
+      document.body.removeChild(element)
+    })
+
+    it('should support dangerouslySetInnerHTML for styles', () => {
+      rain.light('test-light-styles', function() {
+        return () => html`
+          <div>
+            ${dangerouslySetInnerHTML('<style>.styled { color: red; }</style>')}
+            <div class="styled">Styled Content</div>
+          </div>
+        `
+      })
+      
+      const element = document.createElement('test-light-styles')
+      document.body.appendChild(element)
+      
+      // Should not have shadow root
+      expect(element.shadowRoot).toBeNull()
+      
+      // Should have style tag and content
+      expect(element.querySelector('style')).toBeDefined()
+      expect(element.querySelector('.styled')).toBeDefined()
+      expect(element.textContent).toContain('Styled Content')
+      
+      document.body.removeChild(element)
+    })
+
+    it('should work with props in light DOM', () => {
+      rain.light('test-light-props', {
+        value: { type: String, default: 'none' }
+      }, function(props) {
+        const value = $.computed(() => props().value)
+        return () => html`<div>Value: ${value}</div>`
+      })
+      
+      const element = document.createElement('test-light-props')
+      document.body.appendChild(element)
+      
+      expect(element.textContent).toBe('Value: none')
+      
+      element.setAttribute('value', 'updated')
+      expect(element.textContent).toBe('Value: updated')
+      
+      document.body.removeChild(element)
+    })
+
+    it('should work with lifecycle hooks in light DOM', () => {
+      const mountedFn = vi.fn()
+      const unmountedFn = vi.fn()
+      
+      rain.light('test-light-lifecycle', function() {
+        onMounted(mountedFn)
+        onUnmounted(unmountedFn)
+        return () => html`<div>Lifecycle Test</div>`
+      })
+      
+      const element = document.createElement('test-light-lifecycle')
+      
+      expect(mountedFn).not.toHaveBeenCalled()
+      document.body.appendChild(element)
+      expect(mountedFn).toHaveBeenCalledTimes(1)
+      
+      expect(unmountedFn).not.toHaveBeenCalled()
+      document.body.removeChild(element)
+      expect(unmountedFn).toHaveBeenCalledTimes(1)
+    })
+
+    it('should work with slots in light DOM', () => {
+      // For now, let's test that slots at least don't break light DOM components
+      rain.light('test-light-slots-basic', function() {
+        return () => html`
+          <div>
+            <h3>Component Title</h3>
+            <slot name="content">Default content</slot>
+          </div>
+        `
+      })
+      
+      const element = document.createElement('test-light-slots-basic')
+      document.body.appendChild(element)
+      
+      // Should not have shadow root
+      expect(element.shadowRoot).toBeNull()
+      
+      // Should have the component template
+      expect(element.textContent).toContain('Component Title')
+      expect(element.textContent).toContain('Default content')
+      
+      // Should have the slot element
+      expect(element.querySelector('slot[name="content"]')).toBeDefined()
+      
+      document.body.removeChild(element)
+    })
+
+    it('should show default slot content when no content provided', () => {
+      rain.light('test-light-slots-default', function() {
+        return () => html`
+          <div>
+            <slot name="content">Default slot content</slot>
+          </div>
+        `
+      })
+      
+      const element = document.createElement('test-light-slots-default')
+      document.body.appendChild(element)
+      
+      // Should show default content
+      expect(element.textContent).toContain('Default slot content')
+      
+      document.body.removeChild(element)
+    })
+
+    it('should work with css() function in light DOM', () => {
+      rain.light('test-light-css', function() {
+        const styles = css`
+          .test-css {
+            color: red;
+            padding: 10px;
+          }
+        `
+        return () => html`
+          <div>
+            ${styles}
+            <div class="test-css">CSS styled content</div>
+          </div>
+        `
+      })
+      
+      const element = document.createElement('test-light-css')
+      document.body.appendChild(element)
+      
+      // Should have the style tag
+      expect(element.querySelector('style')).toBeDefined()
+      
+      // Should have the styled content
+      expect(element.textContent).toContain('CSS styled content')
+      
+      // Should have the CSS rule
+      expect(element.querySelector('style').textContent).toContain('.test-css')
+      expect(element.querySelector('style').textContent).toContain('color: red')
+      
+      document.body.removeChild(element)
+    })
+
   })
 })

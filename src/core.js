@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS Core - Reactive template system with HTM and Preact signals
- * @version 0.0.6
+ * @version 0.0.7
  */
 
 import htm from 'htm'
@@ -41,19 +41,6 @@ function processAttribute(element, key, value) {
   if (key.startsWith('@') && typeof value === 'function') {
     const eventName = key.slice(1)
     element.addEventListener(eventName, value)
-  } else if (key.startsWith('.')) {
-    const propName = key.slice(1)
-    if (isSignal(value)) {
-      effect(() => {
-        element[propName] = value.value
-      })
-    } else if (typeof value === 'function' && value[SIGNAL_SYMBOL]) {
-      effect(() => {
-        element[propName] = value()
-      })
-    } else {
-      element[propName] = value
-    }
   } else if (isSignal(value)) {
     effect(() => {
       setElementValue(element, key, value.value)
@@ -580,4 +567,30 @@ export function css(strings, ...values) {
   })
 }
 
-export { $, html, render, list, match }
+/**
+ * Creates a dangerous HTML object for raw HTML insertion
+ * WARNING: This bypasses XSS protection. Only use with trusted content.
+ * @param {string} html - Raw HTML string to insert
+ * @returns {DocumentFragment} Fragment containing parsed HTML
+ * @example
+ * html`
+ *   ${dangerouslySetInnerHTML('<style>.my-comp { color: red; }</style>')}
+ *   <div class="my-comp">Styled content</div>
+ * `
+ */
+function dangerouslySetInnerHTML(html) {
+  if (typeof html !== 'string') {
+    throw new Error('dangerouslySetInnerHTML expects a string')
+  }
+  const container = document.createElement('div')
+  container.innerHTML = html
+
+  const fragment = document.createDocumentFragment()
+  while (container.firstChild) {
+    fragment.appendChild(container.firstChild)
+  }
+
+  return fragment
+}
+
+export { $, html, render, list, match, dangerouslySetInnerHTML }
