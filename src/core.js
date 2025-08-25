@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS Core - Reactive template system with HTM and Preact signals
- * @version 0.0.6
+ * @version 0.0.9
  */
 
 import htm from 'htm'
@@ -200,8 +200,7 @@ function html(strings, ...values) {
 /**
  * Renders conditional content based on signal value with smart matching
  * @param {() => any} valueSignal - Signal function containing the value to match against
- * @param {Record<string|number, () => Element>} cases - Object mapping values to render functions
- * @param {() => Element} [fallback] - Optional fallback render function for unmatched values
+ * @param {Record<string|number, () => Element>} cases - Object mapping values to render functions (supports 'default' key)
  * @returns {Element} Container element with conditionally rendered content
  * @throws {Error} When valueSignal is not a signal function
  * @throws {Error} When cases is not an object
@@ -213,13 +212,14 @@ function html(strings, ...values) {
  *   'error': () => html`<div>Error occurred</div>`
  * })
  *
- * // With fallback
+ * // With default case
  * match(status, {
  *   'active': () => html`<span class="active">●</span>`,
- *   'inactive': () => html`<span class="inactive">○</span>`
- * }, () => html`<span class="unknown">?</span>`)
+ *   'inactive': () => html`<span class="inactive">○</span>`,
+ *   'default': () => html`<span class="unknown">?</span>`
+ * })
  */
-function match(valueSignal, cases, fallback) {
+function match(valueSignal, cases) {
   if (typeof valueSignal !== 'function' || !valueSignal[SIGNAL_SYMBOL]) {
     throw new Error('match() expects a signal as first argument')
   }
@@ -243,8 +243,8 @@ function match(valueSignal, cases, fallback) {
     }
 
     let renderFn = cases[key]
-    if (!renderFn && fallback) {
-      renderFn = fallback
+    if (!renderFn && cases.default) {
+      renderFn = cases.default
     }
 
     if (renderFn && typeof renderFn === 'function') {
@@ -580,4 +580,30 @@ export function css(strings, ...values) {
   })
 }
 
-export { $, html, render, list, match }
+/**
+ * Creates a dangerous HTML object for raw HTML insertion
+ * WARNING: This bypasses XSS protection. Only use with trusted content.
+ * @param {string} html - Raw HTML string to insert
+ * @returns {DocumentFragment} Fragment containing parsed HTML
+ * @example
+ * html`
+ *   ${DHTML('<style>.my-comp { color: red; }</style>')}
+ *   <div class="my-comp">Styled content</div>
+ * `
+ */
+function DHTML(html) {
+  if (typeof html !== 'string') {
+    throw new Error('DHTML expects a string')
+  }
+  const container = document.createElement('div')
+  container.innerHTML = html
+
+  const fragment = document.createDocumentFragment()
+  while (container.firstChild) {
+    fragment.appendChild(container.firstChild)
+  }
+
+  return fragment
+}
+
+export { $, html, render, list, match, DHTML }

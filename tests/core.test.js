@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { $, html, render, list, match, css } from '../src/core.js'
+import { $, html, render, list, match, css, DHTML } from '../src/core.js'
 
 describe('core.js', () => {
   describe('$ (signal creation)', () => {
@@ -237,11 +237,12 @@ describe('core.js', () => {
       expect(el.textContent).toBe('Success!')
     })
 
-    it('should use fallback for unmatched values', () => {
+    it('should use default case for unmatched values', () => {
       const [value, setValue] = $('unknown')
       const el = match(value, {
-        'known': () => html`<div>Known</div>`
-      }, () => html`<div>Fallback</div>`)
+        'known': () => html`<div>Known</div>`,
+        'default': () => html`<div>Fallback</div>`
+      })
       
       expect(el.textContent).toBe('Fallback')
     })
@@ -387,6 +388,34 @@ describe('core.js', () => {
       expect(el.children[0].textContent).toBe('0: a')
       expect(el.children[1].textContent).toBe('1: b')
       expect(el.children[2].textContent).toBe('2: c')
+    })
+  })
+
+  describe('DHTML', () => {
+    it('should create document fragment from HTML string', () => {
+      const fragment = DHTML('<p>Hello</p><span>World</span>')
+      expect(fragment instanceof DocumentFragment).toBe(true)
+      
+      const div = document.createElement('div')
+      div.appendChild(fragment)
+      expect(div.innerHTML).toBe('<p>Hello</p><span>World</span>')
+    })
+
+    it('should handle empty HTML string', () => {
+      const fragment = DHTML('')
+      expect(fragment instanceof DocumentFragment).toBe(true)
+      expect(fragment.childNodes.length).toBe(0)
+    })
+
+    it('should throw for non-string input', () => {
+      expect(() => DHTML(123)).toThrow('DHTML expects a string')
+      expect(() => DHTML(null)).toThrow('DHTML expects a string')
+      expect(() => DHTML(undefined)).toThrow('DHTML expects a string')
+    })
+
+    it('should work with html template', () => {
+      const element = html`<div>${DHTML('<strong>Bold text</strong>')}</div>`
+      expect(element.innerHTML).toBe('<strong>Bold text</strong>')
     })
   })
 })

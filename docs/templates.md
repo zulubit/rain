@@ -143,13 +143,14 @@ rain('status-display', function() {
 })
 ```
 
-### With Fallback
+### With Default Case
 
 ```javascript
 match(userType, {
   'admin': () => html`<admin-panel />`,
-  'user': () => html`<user-dashboard />`
-}, () => html`<guest-view />`)  // fallback for unmatched values
+  'user': () => html`<user-dashboard />`,
+  'default': () => html`<guest-view />`  // default case for unmatched values
+})
 ```
 
 ### Benefits over if/else
@@ -157,7 +158,7 @@ match(userType, {
 - Automatic reactivity
 - Type-safe value matching
 - Efficient DOM updates (only matched branch renders)
-- Optional fallback for unhandled cases
+- Optional default case for unhandled values
 
 ## List Reconciliation
 

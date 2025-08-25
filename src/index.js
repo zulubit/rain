@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS - Reactive Web Components with HTM templates and Preact signals
- * @version 0.0.6
+ * @version 0.0.9
  * @author RainJS Team
  * @license MIT
  */
@@ -11,7 +11,8 @@ export {
   render,
   list,
   match,
-  css
+  css,
+  DHTML
 } from './core.js'
 
 export {

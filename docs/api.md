@@ -206,21 +206,21 @@ html`<button @click=${handler}>Click</button>`
 
 **Returns**: `Element` - DOM element
 
-### `match(signal, cases, fallback?)`
+### `match(signal, cases)`
 Conditional rendering based on signal value.
 
 ```javascript
 match(status, {
   'loading': () => html`<div>Loading...</div>`,
   'success': () => html`<div>Success!</div>`,
-  'error': () => html`<div>Error!</div>`
+  'error': () => html`<div>Error!</div>`,
+  'default': () => html`<div>Unknown status</div>`
 })
 ```
 
 **Parameters**:
 - `signal: () => T` - reactive signal
-- `cases: object` - value to render function mapping
-- `fallback?: () => Element` - optional fallback renderer
+- `cases: object` - value to render function mapping with optional `default` case
 
 **Returns**: `Element` - container with conditional content
 
@@ -400,6 +400,35 @@ window.RAIN_DEBUG = true
 - Each component instance has isolated state
 - Shadow DOM provides style encapsulation
 - Slots enable content projection
+
+### `DHTML(html)`
+Creates a DocumentFragment from HTML string for dangerous HTML insertion.
+
+```javascript
+// Basic usage - inject HTML from user/API data
+const userHTML = '<p>Hello <strong>World</strong></p>'
+const fragment = DHTML(userHTML)
+container.appendChild(fragment)
+
+// In templates
+return () => html`
+  <div>
+    ${DHTML(apiResponse.htmlContent)}
+  </div>
+`
+```
+
+**Parameters**:
+- `html: string` - HTML string to parse
+
+**Returns**: `DocumentFragment` - parsed HTML as document fragment
+
+**Security Warning**: This function bypasses XSS protection by design. Only use with trusted HTML content. Never use with unsanitized user input.
+
+**Use Cases**:
+- Rendering HTML from trusted APIs
+- Processing sanitized markup
+- Migrating legacy HTML content
 
 ## Working Examples
 
