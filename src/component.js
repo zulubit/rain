@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS Component System - Web Components with reactive templates
- * @version 0.0.7
+ * @version 0.0.6
  */
 
 import { html, render, $ } from './core.js'
@@ -141,15 +141,8 @@ function createComponentClass(name, propDefs, factory, shadowMode = 'closed') {
 
       this.renderError = renderError
 
-      // Create shadow DOM in constructor or use element directly
-      let root
-      if (shadowMode === 'none') {
-        root = this // Use element directly for light DOM
-        this._usingShadowDOM = false
-      } else {
-        root = this.attachShadow({ mode: shadowMode })
-        this._usingShadowDOM = true
-      }
+      // Create shadow DOM in constructor
+      const root = this.attachShadow({ mode: shadowMode })
 
       currentInstance = this
 
@@ -256,7 +249,6 @@ function createComponentClass(name, propDefs, factory, shadowMode = 'closed') {
  * @typedef RainComponent
  * @property {import('@preact/signals-core').Signal} _propsSignal - Reactive props signal
  * @property {(eventName: string, detail?: any) => void} emit - Emit custom events
- * @property {boolean} _usingShadowDOM - Whether component uses shadow DOM
  * @property {(() => void)[]} [_m] - Mounted hooks
  * @property {(() => void)[]} [_um] - Unmounted hooks
  */
@@ -328,40 +320,6 @@ rain.open = function(name, propDefs, factory) {
     }
 
     const ComponentClass = createComponentClass(validatedName, validatedPropDefs, validatedFactory, 'open')
-    customElements.define(validatedName, ComponentClass)
-    return true
-  } catch (error) {
-    console.error(`Failed to register component '${name}':`, error)
-    return false
-  }
-}
-
-/**
- * Defines a reactive web component with light DOM (no shadow DOM)
- * Renders directly into the element's regular DOM
- * @param {string} name - Custom element tag name (must contain hyphen)
- * @param {Record<string, any> | Function} propDefs - Property definitions object, or factory function
- * @param {Function} [factory] - Component factory function returning template function
- * @returns {boolean} True if component was successfully registered
- * @throws {Error} When name or factory is invalid
- * @example
- * rain.light('my-card', function() {
- *   return () => html`
- *     ${dangerouslySetInnerHTML('<style>.card { padding: 1rem; }</style>')}
- *     <div class="card">Light DOM content</div>
- *   `;
- * });
- */
-rain.light = function(name, propDefs, factory) {
-  try {
-    const { name: validatedName, propDefs: validatedPropDefs, factory: validatedFactory } = validateRainParams(name, propDefs, factory)
-
-    if (customElements.get(validatedName)) {
-      debugLog('Component', `'${validatedName}' already defined, skipping`)
-      return true
-    }
-
-    const ComponentClass = createComponentClass(validatedName, validatedPropDefs, validatedFactory, 'none')
     customElements.define(validatedName, ComponentClass)
     return true
   } catch (error) {

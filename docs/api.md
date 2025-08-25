@@ -108,23 +108,16 @@ rain('styled-component', function() {
 })
 ```
 
+**Parameters**:
 - Template literal with CSS and reactive interpolations
-- Returns computed signal returning `<style>` element
-- Works in both shadow DOM and light DOM
 
-### `dangerouslySetInnerHTML(html)`
-Inserts raw HTML. ⚠️ **Only use with trusted content**.
+**Returns**: `() => Element` - computed signal returning `<style>` element
 
-```javascript
-rain.light('my-component', function() {
-  return () => html`
-    <div>
-      ${dangerouslySetInnerHTML('<style>.custom { color: blue; }</style>')}
-      <div class="custom">Content</div>
-    </div>
-  `
-})
-```
+**Notes**:
+- Must be used as template literal: `css\`...\``
+- Supports reactive values through computed signals
+- Returns new `<style>` element on each call
+- CSS is automatically scoped within Shadow DOM
 
 ## Component System
 
@@ -181,24 +174,6 @@ console.log(element.shadowRoot) // accessible
 - When external tools need to inspect the shadow tree
 - For debugging or testing purposes
 - When intentionally allowing external manipulation
-
-### `rain.light(name, factory)`
-### `rain.light(name, props, factory)`
-Registers a Web Component with light DOM (no shadow DOM).
-
-```javascript
-rain.light('my-component', function() {
-  return () => html`
-    <div>
-      ${css`.card { padding: 1rem; }`}
-      <div class="card">Light DOM content</div>
-    </div>
-  `
-})
-```
-
-- No style encapsulation - styles are global
-- Use for SSR compatibility and simpler DOM structure
 
 ### Prop Types
 - `String` - text values
@@ -324,6 +299,12 @@ html`<button @click=${handler}>Click</button>`
 html`<input @input=${e => setValue(e.target.value)} />`
 ```
 
+### Property Binding
+```javascript
+html`<input .value=${value} .disabled=${disabled} />`
+html`<my-component .data=${complexObject} />`
+```
+
 ### Attribute Binding
 ```javascript
 html`<div class=${className} id=${elementId}></div>`
@@ -426,4 +407,3 @@ window.RAIN_DEBUG = true
 - [examples/02-components.html](../examples/02-components.html) - Component patterns
 - [examples/03-reactivity.html](../examples/03-reactivity.html) - Reactive state
 - [examples/04-templates.html](../examples/04-templates.html) - Template features
-- [examples/05-light-dom.html](../examples/05-light-dom.html) - Light DOM components

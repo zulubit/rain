@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS - Reactive Web Components with HTM templates and Preact signals
- * @version 0.0.7
+ * @version 0.0.6
  * @author RainJS Team
  * @license MIT
  */
@@ -11,8 +11,7 @@ export {
   render,
   list,
   match,
-  css,
-  dangerouslySetInnerHTML
+  css
 } from './core.js'
 
 export {

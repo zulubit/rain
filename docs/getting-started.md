@@ -84,23 +84,6 @@ rain('card-with-slot', {
 - **Events**: `@click=${handler}` - event binding
 - **Props**: Typed with defaults and validation
 - **Slots**: `<slot name="content">` for content projection
-- **Shadow DOM**: Closed by default (`rain()`), open with `rain.open()`
-- **Light DOM**: Use `rain.light()` for components without shadow DOM
-
-## Light DOM Components
-
-Use `rain.light()` for components without shadow DOM:
-
-```javascript
-rain.light('my-card', function() {
-  return () => html`
-    <div>
-      ${css`.card { padding: 1rem; }`}
-      <div class="card">Light DOM content</div>
-    </div>
-  `
-})
-```
 
 ## Next Steps
 
@@ -109,7 +92,6 @@ rain.light('my-card', function() {
 - [Templates](templates.md) - Template syntax
 - [API Reference](api.md) - Complete API
 
-## Working Examples
+## Working Example
 
-- [examples/01-getting-started.html](../examples/01-getting-started.html) - Basic components
-- [examples/05-light-dom.html](../examples/05-light-dom.html) - Light DOM components
+[examples/01-getting-started.html](../examples/01-getting-started.html)

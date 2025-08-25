@@ -95,7 +95,7 @@ rain('keyed-list-demo', function() {
           <div>
             <input 
               type="checkbox" 
-              checked=${todo.done}
+              .checked=${todo.done}
               @change=${() => toggleTodo(todo.id)}
             />
             <span>${todo.text}</span>
@@ -114,7 +114,7 @@ rain('keyed-list-demo', function() {
 
 - **Interpolation**: `${expression}` for dynamic content
 - **Events**: `@event=${handler}` for event binding  
-- **Attributes**: `attribute=${value}` for HTML attributes
+- **Properties**: `.prop=${value}` for DOM properties
 - **Conditionals**: `match(signal, cases)` for conditional rendering
 - **Lists**: `list(signal, renderFn)` for arrays
 - **Keyed Lists**: `list(signal, renderFn, keyFn)` for smart reconciliation
@@ -212,6 +212,9 @@ html`<p>Hello ${name}</p>`
 
 // Event handling
 html`<button @click=${handler}>Click</button>`
+
+// Property binding
+html`<input .value=${value} />`
 
 // Conditional rendering
 match(status, {
