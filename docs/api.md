@@ -79,42 +79,6 @@ $.emit('custom-event', { data: 'value' }, element)
 - `detail?: any` - event detail data (optional)
 - `target?: EventTarget` - target to emit from (defaults to document)
 
-### `$.getSlots()`
-Captures slotted content for light DOM components. **Only available in light DOM components**.
-
-```javascript
-rain.light('my-component', function() {
-  const slots = $.getSlots()  // Capture slotted content
-  
-  return () => html`
-    <div class="card">
-      <header>${slots.header || html`<h2>Default Header</h2>`}</header>
-      <main>${slots.content || slots.default || 'No content'}</main>
-      <footer>${slots.footer || html`<small>Default footer</small>`}</footer>
-    </div>
-  `
-})
-```
-
-**Usage**:
-```html
-<my-component>
-  <h1 slot="header">Custom Title</h1>
-  <p slot="content">Main content</p>
-  <button slot="footer">Action</button>
-</my-component>
-```
-
-**Returns**: `{ [slotName: string]: DocumentFragment }` - object mapping slot names to content
-- Named slots: accessed by `slot` attribute value
-- Default slot: elements without `slot` attribute, accessible as `slots.default`
-- Fallback: Use `||` operator to provide fallback content when slots are empty
-
-**Important**: 
-- Only works in light DOM components created with `rain.light()`
-- Must be called within the component factory function
-- Throws error if called outside light DOM component context
-
 ### `css`
 Creates reactive CSS stylesheets using template literals.
 

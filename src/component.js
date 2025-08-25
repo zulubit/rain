@@ -1,6 +1,6 @@
 /**
  * @fileoverview RainJS Component System - Web Components with reactive templates
- * @version 0.0.8
+ * @version 0.0.7
  */
 
 import { html, render, $ } from './core.js'
@@ -163,27 +163,12 @@ function createComponentClass(name, propDefs, factory, shadowMode = 'closed') {
         )
       }
 
-      // Capture slotted content for light DOM components
-      let slottedContent = null
-      if (!this._usingShadowDOM) {
-        slottedContent = this.captureSlottedContent()
-      }
-
       let template
-      // Override $.getSlots() during factory execution for light DOM components
-      const originalGetSlots = $.getSlots
-      if (!this._usingShadowDOM && slottedContent) {
-        $.getSlots = () => slottedContent
-      }
-
       try {
         template = factory.call(this, propsSignal)
       } catch (error) {
         logError(error, name, 'factory')
         template = () => this.renderError(error)
-      } finally {
-        // Always restore original function
-        $.getSlots = originalGetSlots
       }
 
       // Mark initialization as complete after factory but before template render
@@ -211,24 +196,6 @@ function createComponentClass(name, propDefs, factory, shadowMode = 'closed') {
 
       this._root = root
       this._isMounted = false
-    }
-
-    captureSlottedContent() {
-      const slots = {}
-      const children = Array.from(this.children)
-
-      children.forEach(child => {
-        const slotName = child.getAttribute('slot') || 'default'
-        if (!slots[slotName]) {
-          slots[slotName] = document.createDocumentFragment()
-        }
-
-        // Clone the child to avoid moving it from original DOM
-        const clonedChild = child.cloneNode(true)
-        slots[slotName].appendChild(clonedChild)
-      })
-
-      return slots
     }
 
     _cleanupElement(element) {

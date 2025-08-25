@@ -20,7 +20,6 @@ rain('my-counter', function() {
 - **Fine-grained reactivity** with Preact signals
 - **No build step** - works directly in the browser
 - **Web Components** with reactive templates
-- **Light DOM support** with slot emulation for SSR compatibility
 - **Tiny size** - 7KB gzipped
 - **TypeScript friendly** with full JSDoc annotations
 
@@ -60,21 +59,8 @@ rain('user-card', {
   `
 })
 
-// Light DOM component with slot emulation
-rain.light('my-card', function() {
-  const slots = $.getSlots()
-  
-  return () => html`
-    <div class="card">
-      <header>${slots.header || html`<h2>Default</h2>`}</header>
-      <main>${slots.content || 'No content'}</main>
-    </div>
-  `
-})
-
 // Use it in HTML
 // <user-card name="Alice" age="25"></user-card>
-// <my-card><h1 slot="header">Title</h1><p slot="content">Body</p></my-card>
 ```
 
 ## Documentation
