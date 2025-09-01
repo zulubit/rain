@@ -183,15 +183,21 @@ const getInstanceKey = () => `__rain_instance_${++instanceCounter}`
 
 /**
  * HTM template function for creating reactive DOM elements
- * Automatically adds cache-busting for component isolation
+ * Automatically adds cache-busting for component isolation and strips whitespace
  * @param {TemplateStringsArray} strings - Template string array
  * @param {...any} values - Template interpolation values
  * @returns {Element} Created DOM element
  * @example html`<div>Hello ${name}</div>`
  */
 function html(strings, ...values) {
-  // Add a unique cache-buster to prevent HTM from reusing DOM elements between component instances
+  // Strip leading whitespace from first string and trailing whitespace from last string
   const modifiedStrings = [...strings]
+  if (modifiedStrings.length > 0) {
+    modifiedStrings[0] = modifiedStrings[0].replace(/^\s+/, '')
+    modifiedStrings[modifiedStrings.length - 1] = modifiedStrings[modifiedStrings.length - 1].replace(/\s+$/, '')
+  }
+
+  // Add a unique cache-buster to prevent HTM from reusing DOM elements between component instances
   modifiedStrings[modifiedStrings.length - 1] += `<!-- ${getInstanceKey()} -->`
 
   return htmBound(modifiedStrings, ...values)

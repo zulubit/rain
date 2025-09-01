@@ -5,7 +5,6 @@
 
 import { html, render, $ } from './core.js'
 import { debugLog } from './utils.js'
-import { createPropsManager } from './props.js'
 
 /**
  * Logs component errors with contextual information
@@ -28,10 +27,10 @@ function logError(error, componentName, phase) {
  * @throws {Error} When factory function is invalid or missing
  * @private
  */
-function validateRainParams(name, propDefs, factory) {
-  if (typeof propDefs === 'function') {
-    factory = propDefs
-    propDefs = {}
+function validateRainParams(name, propNames, factory) {
+  if (typeof propNames === 'function') {
+    factory = propNames
+    propNames = []
   }
 
   if (!name || typeof name !== 'string') {
@@ -40,8 +39,11 @@ function validateRainParams(name, propDefs, factory) {
   if (!factory || typeof factory !== 'function') {
     throw new Error('Component factory function is required')
   }
+  if (propNames && !Array.isArray(propNames)) {
+    throw new Error('Props must be an array of strings')
+  }
 
-  return { name, propDefs: propDefs || {}, factory }
+  return { name, propNames: propNames || [], factory }
 }
 
 /**
@@ -90,50 +92,27 @@ function setupMemoryManagement(component) {
  * @returns {typeof HTMLElement} Component class
  * @private
  */
-function createComponentClass(name, propDefs, factory, shadowMode = 'closed') {
-  return class extends HTMLElement {
+function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
+  const ComponentClass = class extends HTMLElement {
     static get observedAttributes() {
-      // Create temporary props manager to get observed attributes
-      const tempManager = createPropsManager(propDefs, {
-        hasAttribute: () => false,
-        getAttribute: () => null,
-        tagName: name.toUpperCase()
-      })
-      return tempManager.observedAttributes
+      return this._propNames || []
     }
 
     constructor() {
       super()
 
-      this._propsManager = createPropsManager(propDefs, this)
-      const initialProps = this._propsManager.getInitialProps()
+      // Get propNames from the class
+      const componentPropNames = this.constructor._propNames
 
-      const [propsSignal, setPropsSignal] = $(initialProps)
-      this._propsSignal = propsSignal
-      this._setPropsSignal = setPropsSignal
-      this._isInitializing = true
+      // Create signal tuples directly from propNames
+      const props = {}
+      this._propSetters = {}
 
-      this._propsManager.setupPropertyDescriptors(
-        (name) => this._propsSignal()[name],
-        (name, value) => {
-          if (this._isInitializing) {
-            const currentProps = this._propsSignal()
-            currentProps[name] = value
-          } else {
-            const deferUpdate = () => {
-              const newProps = { ...this._propsSignal() }
-              newProps[name] = value
-              this._setPropsSignal(newProps)
-            }
-
-            if (typeof queueMicrotask === 'function') {
-              queueMicrotask(deferUpdate)
-            } else {
-              Promise.resolve().then(deferUpdate)
-            }
-          }
-        }
-      )
+      for (const propName of componentPropNames || []) {
+        const [getter, setter] = $(this.getAttribute(propName) || '')
+        props[propName] = getter
+        this._propSetters[propName] = setter
+      }
 
       setupLifecycleHooks(this)
       setupMemoryManagement(this)
@@ -158,15 +137,12 @@ function createComponentClass(name, propDefs, factory, shadowMode = 'closed') {
 
       let template
       try {
-        template = factory.call(this, propsSignal)
+        template = factory.call(this, props)
       } catch (error) {
         logError(error, name, 'factory')
         template = () => this.renderError(error)
       }
 
-      // Mark initialization as complete after factory but before template render
-      // This allows dot syntax props to work reactively during template rendering
-      this._isInitializing = false
       currentInstance = null
 
       // Render template immediately
@@ -235,14 +211,16 @@ function createComponentClass(name, propDefs, factory, shadowMode = 'closed') {
     }
 
     attributeChangedCallback(attrName, oldValue, newValue) {
-      const coercedValue = this._propsManager.handleAttributeChange(attrName, newValue)
-      if (coercedValue !== null) {
-        const newProps = { ...this._propsSignal() }
-        newProps[attrName] = coercedValue
-        this._setPropsSignal(newProps)
+      if (this._propSetters && this._propSetters[attrName]) {
+        this._propSetters[attrName](newValue || '')
       }
     }
   }
+
+  // Set the propNames on the class
+  ComponentClass._propNames = propNames
+
+  return ComponentClass
 }
 
 /**
@@ -264,32 +242,31 @@ let currentInstance
  * Defines a reactive web component with built-in state management and styling
  * Uses closed shadow DOM by default for complete encapsulation
  * @param {string} name - Custom element tag name (must contain hyphen)
- * @param {Record<string, any> | Function} propDefs - Property definitions object, or factory function
+ * @param {string[] | Function} propNames - Array of prop names, or factory function
  * @param {Function} [factory] - Component factory function returning template function
  * @returns {boolean} True if component was successfully registered
  * @throws {Error} When name or factory is invalid
  * @example
- * // Closed shadow DOM (default)
- * rain('my-counter', function() {
- *   const [count, setCount] = $(0);
- *   return () => html`<button @click=${() => setCount(count() + 1)}>${count}</button>`;
+ * // Component with props
+ * rain('my-button', ['label', 'disabled'], function(props) {
+ *   return () => html`<button disabled=${props.disabled()}>${props.label()}</button>`;
  * });
  *
- * // Open shadow DOM
- * rain.open('my-card', function() {
- *   return () => html`<div class="card">Open shadow DOM</div>`;
+ * // Component without props
+ * rain('my-card', function() {
+ *   return () => html`<div class="card">Hello</div>`;
  * });
  */
-function rain(name, propDefs, factory) {
+function rain(name, propNames, factory) {
   try {
-    const { name: validatedName, propDefs: validatedPropDefs, factory: validatedFactory } = validateRainParams(name, propDefs, factory)
+    const { name: validatedName, propNames: validatedPropNames, factory: validatedFactory } = validateRainParams(name, propNames, factory)
 
     if (customElements.get(validatedName)) {
       debugLog('Component', `'${validatedName}' already defined, skipping`)
       return true
     }
 
-    const ComponentClass = createComponentClass(validatedName, validatedPropDefs, validatedFactory, 'closed')
+    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'closed')
     customElements.define(validatedName, ComponentClass)
     return true
   } catch (error) {
@@ -301,25 +278,25 @@ function rain(name, propDefs, factory) {
 /**
  * Defines a reactive web component with open shadow DOM
  * @param {string} name - Custom element tag name (must contain hyphen)
- * @param {Record<string, any> | Function} propDefs - Property definitions object, or factory function
+ * @param {string[] | Function} propNames - Array of prop names, or factory function
  * @param {Function} [factory] - Component factory function returning template function
  * @returns {boolean} True if component was successfully registered
  * @throws {Error} When name or factory is invalid
  * @example
- * rain.open('my-card', function() {
- *   return () => html`<div class="card">Open shadow DOM allows external styling</div>`;
+ * rain.open('my-card', ['title'], function(props) {
+ *   return () => html`<div class="card">${props.title()}</div>`;
  * });
  */
-rain.open = function(name, propDefs, factory) {
+rain.open = function(name, propNames, factory) {
   try {
-    const { name: validatedName, propDefs: validatedPropDefs, factory: validatedFactory } = validateRainParams(name, propDefs, factory)
+    const { name: validatedName, propNames: validatedPropNames, factory: validatedFactory } = validateRainParams(name, propNames, factory)
 
     if (customElements.get(validatedName)) {
       debugLog('Component', `'${validatedName}' already defined, skipping`)
       return true
     }
 
-    const ComponentClass = createComponentClass(validatedName, validatedPropDefs, validatedFactory, 'open')
+    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'open')
     customElements.define(validatedName, ComponentClass)
     return true
   } catch (error) {
