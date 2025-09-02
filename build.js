@@ -2,6 +2,20 @@
 
 import { build } from 'esbuild'
 import { rmSync } from 'fs'
+import { spawn } from 'child_process'
+
+function runCommand(command, args = []) {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(command, args, { stdio: 'inherit' })
+    proc.on('close', (code) => {
+      if (code === 0) {
+        resolve()
+      } else {
+        reject(new Error(`Command failed with code ${code}`))
+      }
+    })
+  })
+}
 
 const sharedConfig = {
   entryPoints: ['src/index.js'],
@@ -76,6 +90,11 @@ async function buildLibrary() {
       }
     })
     console.log('Minified UMD build complete: dist/rainwc.umd.min.js')
+
+    // Generate TypeScript declarations
+    console.log('Generating TypeScript declarations...')
+    await runCommand('npx', ['tsc'])
+    console.log('TypeScript declarations generated')
 
     console.log('Build complete! Ready for NPM and CDN distribution.')
     console.log('')

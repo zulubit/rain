@@ -1,12 +1,14 @@
 {
   "name": "rainwc",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Fine-grained reactive Web Components framework",
   "type": "module",
   "main": "dist/rainwc.umd.js",
   "module": "dist/rainwc.esm.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/rainwc.esm.js",
       "require": "./dist/rainwc.umd.js"
     }
@@ -43,6 +45,7 @@
     "eslint": "^9.33.0",
     "happy-dom": "^18.0.1",
     "htm": "^3.1.1",
+    "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }
 }
