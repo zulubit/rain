@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { rain, onMounted, onUnmounted } from '../src/component.js'
-import { $, html } from '../src/core.js'
+import { $ } from '../src/core.js'
+import { jsx } from '../src/jsx.js'
 
 describe('component.js', () => {
   beforeEach(() => {
@@ -15,7 +16,7 @@ describe('component.js', () => {
   describe('rain component registration', () => {
     it('should register a simple component', () => {
       const registered = rain('test-simple', function() {
-        return () => html`<div>Simple Component</div>`
+        return () => jsx('div', null, 'Simple Component')
       })
       
       expect(registered).toBe(true)
@@ -24,7 +25,7 @@ describe('component.js', () => {
 
     it('should create component instance', () => {
       rain.open('test-instance', function() {
-        return () => html`<div>Test Instance</div>`
+        return () => jsx('div', null, 'Test Instance')
       })
       
       const element = document.createElement('test-instance')
@@ -39,7 +40,7 @@ describe('component.js', () => {
 
     it('should handle component with props', () => {
       rain.open('test-props', ['name', 'age'], function(props) {
-        return () => html`<div>${props.name} is ${props.age}</div>`
+        return () => jsx('div', null, props.name, ' is ', props.age)
       })
       
       const element = document.createElement('test-props')
@@ -54,7 +55,7 @@ describe('component.js', () => {
 
     it('should update when attributes change', () => {
       rain.open('test-reactive', ['value'], function(props) {
-        return () => html`<div>Value: ${props.value}</div>`
+        return () => jsx('div', null, 'Value: ', props.value)
       })
       
       const element = document.createElement('test-reactive')
@@ -74,8 +75,8 @@ describe('component.js', () => {
     })
 
     it('should skip re-registration of same component', () => {
-      rain.open('test-duplicate', () => () => html`<div>First</div>`)
-      const result = rain.open('test-duplicate', () => () => html`<div>Second</div>`)
+      rain.open('test-duplicate', () => () => jsx('div', null, 'First'))
+      const result = rain.open('test-duplicate', () => () => jsx('div', null, 'Second'))
       
       expect(result).toBe(true) // Still returns true even when skipped
       
@@ -89,10 +90,10 @@ describe('component.js', () => {
     })
 
     it('should validate component name', () => {
-      const result1 = rain(null, () => () => html`<div></div>`)
+      const result1 = rain(null, () => () => jsx('div', null))
       expect(result1).toBe(false)
       
-      const result2 = rain(123, () => () => html`<div></div>`)
+      const result2 = rain(123, () => () => jsx('div', null))
       expect(result2).toBe(false)
     })
 
@@ -106,7 +107,7 @@ describe('component.js', () => {
 
     it('should accept function as second parameter when no props needed', () => {
       const registered = rain.open('test-no-props', function() {
-        return () => html`<div>No Props</div>`
+        return () => jsx('div', null, 'No Props')
       })
       
       expect(registered).toBe(true)
@@ -128,7 +129,7 @@ describe('component.js', () => {
         onMounted(() => {
           mounted = true
         })
-        return () => html`<div>Mounted Test</div>`
+        return () => jsx('div', null, 'Mounted Test')
       })
       
       const element = document.createElement('test-mounted')
@@ -147,7 +148,7 @@ describe('component.js', () => {
         onUnmounted(() => {
           unmounted = true
         })
-        return () => html`<div>Unmounted Test</div>`
+        return () => jsx('div', null, 'Unmounted Test')
       })
       
       const element = document.createElement('test-unmounted')
@@ -167,7 +168,7 @@ describe('component.js', () => {
         onMounted(() => calls.push('mounted2'))
         onUnmounted(() => calls.push('unmounted1'))
         onUnmounted(() => calls.push('unmounted2'))
-        return () => html`<div>Multiple Hooks</div>`
+        return () => jsx('div', null, 'Multiple Hooks')
       })
       
       const element = document.createElement('test-multiple-hooks')
@@ -197,7 +198,7 @@ describe('component.js', () => {
       let eventReceived = null
       
       rain.open('test-emit', function() {
-        return () => html`<div>Emit Test</div>`
+        return () => jsx('div', null, 'Emit Test')
       })
       
       const element = document.createElement('test-emit')
@@ -217,12 +218,10 @@ describe('component.js', () => {
     it('should handle internal state with signals', () => {
       rain.open('test-state', function() {
         const [count, setCount] = $(0)
-        return () => html`
-          <div>
-            <span>Count: ${count}</span>
-            <button onclick=${() => setCount(count() + 1)}>+</button>
-          </div>
-        `
+        return () => jsx('div', null,
+          jsx('span', null, 'Count: ', count),
+          jsx('button', { onClick: () => setCount(count() + 1) }, '+')
+        )
       })
       
       const element = document.createElement('test-state')
@@ -265,7 +264,7 @@ describe('component.js', () => {
   describe('props reactivity', () => {
     it('should initialize props from attributes', async () => {
       rain.open('test-props-init', ['name', 'count'], function(props) {
-        return () => html`<div>Name: ${props.name}, Count: ${props.count}</div>`
+        return () => jsx('div', null, 'Name: ', props.name, ', Count: ', props.count)
       })
       
       const element = document.createElement('test-props-init')
@@ -284,7 +283,7 @@ describe('component.js', () => {
     it('should observe only declared attributes', () => {
       const ComponentClass = customElements.get('test-props') || 
         (() => {
-          rain('test-observed', ['name', 'age'], () => () => html`<div></div>`)
+          rain('test-observed', ['name', 'age'], () => () => jsx('div', null))
           return customElements.get('test-observed')
         })()
       
@@ -293,7 +292,7 @@ describe('component.js', () => {
 
     it('should handle empty props', () => {
       rain.open('test-empty-props', [], function(props) {
-        return () => html`<div>No props</div>`
+        return () => jsx('div', null, 'No props')
       })
       
       const element = document.createElement('test-empty-props')
@@ -306,7 +305,7 @@ describe('component.js', () => {
 
     it('should default to empty string for missing attributes', () => {
       rain.open('test-missing-attrs', ['missing'], function(props) {
-        return () => html`<div>Missing: "${props.missing}"</div>`
+        return () => jsx('div', null, 'Missing: "', props.missing, '"')
       })
       
       const element = document.createElement('test-missing-attrs')

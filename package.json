@@ -1,20 +1,23 @@
 {
   "name": "rainwc",
-  "version": "0.0.12",
-  "description": "Fine-grained reactive Web Components framework",
+  "version": "0.1.0",
+  "description": "Fine-grained reactive Web Components framework with JSX",
   "type": "module",
-  "main": "dist/rainwc.umd.js",
-  "module": "dist/rainwc.esm.js",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/rainwc.esm.js",
-      "require": "./dist/rainwc.umd.js"
+      "import": "./dist/index.js"
+    },
+    "./plugin": {
+      "import": "./vite-plugin-rainwc.js"
     }
   },
   "files": [
     "dist/",
+    "vite-plugin-rainwc.js",
     "README.md"
   ],
   "scripts": {
@@ -27,8 +30,26 @@
     "web-components",
     "reactive",
     "signals",
-    "framework"
+    "framework",
+    "jsx"
   ],
+  "jsx": {
+    "factory": "jsx",
+    "fragment": "Fragment",
+    "pragma": "jsx",
+    "pragmaFrag": "Fragment"
+  },
+  "babel": {
+    "plugins": [
+      [
+        "@babel/plugin-transform-react-jsx",
+        {
+          "pragma": "jsx",
+          "pragmaFrag": "Fragment"
+        }
+      ]
+    ]
+  },
   "author": "weatherjean",
   "homepage": "https://github.com/zulubit/rain#readme",
   "repository": {
@@ -44,7 +65,6 @@
     "esbuild": "^0.25.9",
     "eslint": "^9.33.0",
     "happy-dom": "^18.0.1",
-    "htm": "^3.1.1",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }

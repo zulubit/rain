@@ -7,7 +7,7 @@ Complete reference for RainWC functions and utilities.
 ### `$(initialValue)`
 Creates a reactive signal with getter/setter tuple.
 
-```javascript
+```jsx
 const [count, setCount] = $(0)
 const [user, setUser] = $({ name: 'Alice' })
 ```
@@ -19,7 +19,7 @@ const [user, setUser] = $({ name: 'Alice' })
 ### `$.computed(fn)`
 Creates a computed signal that updates when dependencies change.
 
-```javascript
+```jsx
 const doubled = $.computed(() => count() * 2)
 const fullName = $.computed(() => `${first()} ${last()}`)
 ```
@@ -32,7 +32,7 @@ const fullName = $.computed(() => `${first()} ${last()}`)
 ### `$.effect(fn)`
 Runs side effects when dependencies change.
 
-```javascript
+```jsx
 $.effect(() => {
   document.title = `Count: ${count()}`
 })
@@ -46,7 +46,7 @@ $.effect(() => {
 ### `$.listen(eventName, handler, target?)`
 Listens for custom events with automatic cleanup.
 
-```javascript
+```jsx
 // Listen globally
 $.listen('user-changed', (e) => {
   setUser(e.detail.user)
@@ -66,7 +66,7 @@ $.listen('click', handleClick, button)
 ### `$.emit(eventName, detail?, target?)`
 Emits custom events with consistent API.
 
-```javascript
+```jsx
 // Emit global event
 $.emit('user-changed', { user: newUser })
 
@@ -82,7 +82,7 @@ $.emit('custom-event', { data: 'value' }, element)
 ### `css`
 Creates reactive CSS stylesheets using template literals.
 
-```javascript
+```jsx
 rain('styled-component', function() {
   const [theme, setTheme] = $('light')
   
@@ -98,13 +98,15 @@ rain('styled-component', function() {
     }
   `
   
-  return () => html`
-    <div class="container">
-      ${styles}
-      <p>Theme: ${theme}</p>
-      <button @click=${() => setTheme(theme() === 'light' ? 'dark' : 'light')}>Toggle</button>
+  return () => (
+    <div className="container">
+      {styles}
+      <p>Theme: {theme}</p>
+      <button onClick={() => setTheme(theme() === 'light' ? 'dark' : 'light')}>
+        Toggle
+      </button>
     </div>
-  `
+  )
 })
 ```
 
@@ -125,20 +127,20 @@ rain('styled-component', function() {
 ### `rain(name, propNames, factory)`
 Registers a Web Component with closed shadow DOM (default).
 
-```javascript
+```jsx
 // Simple component
 rain('my-button', function() {
-  return () => html`<button>Click me</button>`
+  return () => <button>Click me</button>
 })
 
 // Component with props
 rain('user-card', ['name', 'age'], function(props) {
-  return () => html`
+  return () => (
     <div>
-      <h3>${props.name() || 'Anonymous'}</h3>
-      <p>Age: ${props.age() || '0'}</p>
+      <h3>{props.name() || 'Anonymous'}</h3>
+      <p>Age: {props.age() || '0'}</p>
     </div>
-  `
+  )
 })
 ```
 
@@ -153,39 +155,53 @@ rain('user-card', ['name', 'age'], function(props) {
 ### `rain.open(name, propNames, factory)`
 Registers a Web Component with open shadow DOM (allows external JavaScript access).
 
-```javascript
+```jsx
 rain.open('my-component', ['title'], function(props) {
-  return () => html`<div>${props.title()}</div>`
+  return () => <div>{props.title()}</div>
 })
 ```
 
 **Parameters**: Same as `rain()`
 **Returns**: `boolean` - success status
 
-## Template System
+## JSX System
 
-### `html`
-HTM template function for creating reactive DOM elements.
+### `jsx(type, props, ...children)`
+JSX pragma function - automatically used by build tools when compiling JSX syntax.
 
-```javascript
-html`<div>Hello ${name}</div>`
-html`<button @click=${handler}>Click</button>`
+```jsx
+// This JSX syntax:
+<div className="container">Hello {name}</div>
+
+// Gets compiled to:
+jsx('div', { className: 'container' }, 'Hello ', name)
 ```
 
-**Returns**: `Element` - DOM element
+**Parameters**:
+- `type: string | Function` - Element type or component function
+- `props: Object | null` - Properties/attributes
+- `children: ...any[]` - Child elements
+
+**Returns**: `Element | any` - DOM element or component result
+
+**Notes**:
+- You typically don't call this directly - the build tool inserts calls automatically
+- Configure your build tool with `jsxFactory: 'jsx'`
+
+## Reactive Utilities
 
 ### `$.if(conditionSignal, trueFn, falseFn?)`
-Simple conditional rendering based on signal value.
+Conditional rendering based on signal value.
 
-```javascript
+```jsx
 // Basic conditional
 $.if(isLoading, 
-  () => html`<div>Loading...</div>`,
-  () => html`<div>Ready!</div>`
+  () => <div>Loading...</div>,
+  () => <div>Ready!</div>
 )
 
 // Without else case
-$.if(showMessage, () => html`<div>Hello World!</div>`)
+$.if(showMessage, () => <div>Hello World!</div>)
 ```
 
 **Parameters**:
@@ -198,18 +214,18 @@ $.if(showMessage, () => html`<div>Hello World!</div>`)
 ### `$.list(itemsSignal, renderFn, keyFn?)`
 Renders reactive lists with optional keyed reconciliation.
 
-```javascript
+```jsx
 // Simple list (re-renders all on change)
-$.list(items, item => html`<li>${item}</li>`)
+$.list(items, item => <li>{item}</li>)
 
 // Keyed list (smart reconciliation - recommended)
 $.list(todos, 
-  todo => html`<div>${todo.text}</div>`,
+  todo => <div>{todo.text}</div>,
   todo => todo.id
 )
 
 // With index parameter
-$.list(items, (item, index) => html`<div>${index}: ${item}</div>`)
+$.list(items, (item, index) => <div>{index}: {item}</div>)
 ```
 
 **Parameters**:
@@ -224,11 +240,26 @@ $.list(items, (item, index) => html`<div>${index}: ${item}</div>`)
 - Preserves component state and DOM focus
 - Fallback to full re-render with invalid/duplicate keys
 
+### `$.DHTML(htmlString)`
+Creates HTML from string (bypasses XSS protection - use carefully).
+
+```jsx
+const htmlContent = $.DHTML('<strong>Bold text</strong>')
+return () => <div>{htmlContent}</div>
+```
+
+**Parameters**:
+- `htmlString: string` - HTML string to parse
+
+**Returns**: `DocumentFragment` - parsed HTML as document fragment
+
+**Warning**: Only use with trusted HTML content to avoid XSS vulnerabilities.
+
 ### `render(element, container)`
 Renders element to container with cleanup.
 
-```javascript
-render(() => html`<div>Hello</div>`, document.body)
+```jsx
+render(() => <div>Hello</div>, document.body)
 ```
 
 **Parameters**:
@@ -242,7 +273,7 @@ render(() => html`<div>Hello</div>`, document.body)
 ### `onMounted(fn)`
 Runs when component connects to DOM.
 
-```javascript
+```jsx
 onMounted(() => {
   console.log('Component mounted!')
 })
@@ -254,7 +285,7 @@ onMounted(() => {
 ### `onUnmounted(fn)`
 Runs when component disconnects from DOM.
 
-```javascript
+```jsx
 onUnmounted(() => {
   console.log('Component unmounted!')
 })
@@ -263,43 +294,49 @@ onUnmounted(() => {
 **Parameters**:
 - `fn: () => void` - unmount callback
 
-## Template Syntax
+## JSX Syntax
 
-### Event Binding
-```javascript
-html`<button @click=${handler}>Click</button>`
-html`<input @input=${e => setValue(e.target.value)} />`
+### Event Handling
+```jsx
+<button onClick={handler}>Click</button>
+<input onInput={e => setValue(e.target.value)} />
+<div onKeyPress={e => e.key === 'Enter' && submit()} />
 ```
 
-### Property Binding
-```javascript
-html`<input .value=${value} .disabled=${disabled} />`
-html`<my-component .data=${complexObject} />`
+### Reactive Properties
+```jsx
+<input value={value} disabled={disabled} />
+<select value={selected}>{options}</select>
 ```
 
-### Attribute Binding
-```javascript
-html`<div class=${className} id=${elementId}></div>`
-html`<input type="text" placeholder=${hint} />`
+### Attributes
+```jsx
+<div className={styles} id={elementId} />
+<input type="text" placeholder={hint} />
 ```
 
 ### Conditional Attributes
-```javascript
-html`<button disabled=${isDisabled}>Button</button>`
+```jsx
+<button disabled={isDisabled}>Button</button>
 // disabled=true sets attribute, disabled=false removes it
 ```
 
-### Fragments
-Use `<frag>` to group elements without creating wrapper DOM:
+### Style Objects
+```jsx
+<div style={{ color: 'red', fontSize: '16px' }}>Styled</div>
+<div style={dynamicStyles} />
+```
 
-```javascript
-html`
-  <frag>
+### Fragments
+Use `<></>` to group elements without wrapper DOM:
+
+```jsx
+return () => (
+  <>
     <h1>Title</h1>
     <p>Content</p>
-  </frag>
-`
-// Creates h1 and p elements with display: contents container
+  </>
+)
 ```
 
 **Benefits**:
@@ -312,7 +349,7 @@ html`
 ### Custom Events
 Components can emit custom events:
 
-```javascript
+```jsx
 // In component - using this.emit
 this.emit('custom-event', { data: 'value' })
 
@@ -328,16 +365,16 @@ $.listen('custom-event', (e) => {
 ### Slots
 Components can accept slotted content:
 
-```javascript
+```jsx
 // Component template
-html`
-  <div class="card">
-    <slot name="header"></slot>
-    <div class="content">
-      <slot name="content"></slot>
+return () => (
+  <div className="card">
+    <slot name="header" />
+    <div className="content">
+      <slot name="content" />
     </div>
   </div>
-`
+)
 ```
 
 ```html
@@ -348,10 +385,42 @@ html`
 </my-card>
 ```
 
+## Build Configuration
+
+### Vite Plugin (Recommended)
+```js
+// vite.config.js
+import { rainwc } from 'rainwc/plugin'
+
+export default {
+  plugins: [rainwc()]
+}
+```
+
+### Manual Configuration
+```js
+// For esbuild/Vite
+{
+  jsx: 'transform',
+  jsxFactory: 'jsx',
+  jsxFragment: 'Fragment'
+}
+
+// For Babel
+{
+  plugins: [
+    ['@babel/plugin-transform-react-jsx', {
+      pragma: 'jsx',
+      pragmaFrag: 'Fragment'
+    }]
+  ]
+}
+```
+
 ## Debugging
 
 Enable debug logging:
 
-```javascript
+```jsx
 window.RAIN_DEBUG = true
 ```

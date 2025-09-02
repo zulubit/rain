@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import * as core from '../src/core.js'
+import { jsx, Fragment } from '../src/jsx.js'
 
-const { $, html, css } = core
+const { $, css } = core
 // Access internal functions for testing
 const render = core.render || core.default?.render
 
@@ -102,13 +103,13 @@ describe('core.js', () => {
 
   describe('html template', () => {
     it('should create basic elements', () => {
-      const div = html`<div>Hello</div>`
+      const div = jsx('div', null, 'Hello')
       expect(div.tagName).toBe('DIV')
       expect(div.textContent).toBe('Hello')
     })
 
     it('should handle nested elements', () => {
-      const el = html`<div><span>Nested</span></div>`
+      const el = jsx('div', null, jsx('span', null, 'Nested'))
       expect(el.tagName).toBe('DIV')
       expect(el.children[0].tagName).toBe('SPAN')
       expect(el.children[0].textContent).toBe('Nested')
@@ -116,7 +117,7 @@ describe('core.js', () => {
 
     it('should handle whitespace around templates', () => {
       expect(() => {
-        const el = html` <div>asdf</div> `
+        const el = jsx('div', null, 'asdf')
         expect(el.tagName).toBe('DIV')
         expect(el.textContent).toBe('asdf')
       }).not.toThrow()
@@ -124,7 +125,7 @@ describe('core.js', () => {
 
     it('should handle leading whitespace in templates', () => {
       expect(() => {
-        const el = html` <div>asdf</div>`
+        const el = jsx('div', null, 'asdf')
         expect(el.tagName).toBe('DIV')  
         expect(el.textContent).toBe('asdf')
       }).not.toThrow()
@@ -132,7 +133,7 @@ describe('core.js', () => {
 
     it('should handle trailing whitespace in templates', () => {
       expect(() => {
-        const el = html`<div>asdf</div> `
+        const el = jsx('div', null, 'asdf')
         expect(el.tagName).toBe('DIV')
         expect(el.textContent).toBe('asdf')
       }).not.toThrow()
@@ -140,13 +141,13 @@ describe('core.js', () => {
 
     it('should interpolate static values', () => {
       const name = 'World'
-      const el = html`<div>Hello ${name}</div>`
+      const el = jsx('div', null, 'Hello ', name)
       expect(el.textContent).toBe('Hello World')
     })
 
     it('should bind reactive signals', () => {
       const [count, setCount] = $(0)
-      const el = html`<div>Count: ${count}</div>`
+      const el = jsx('div', null, 'Count: ', count)
       expect(el.textContent).toBe('Count: 0')
       
       setCount(5)
@@ -155,14 +156,14 @@ describe('core.js', () => {
 
     it('should handle event listeners', () => {
       const onClick = vi.fn()
-      const button = html`<button @click=${onClick}>Click me</button>`
+      const button = jsx('button', { onClick: onClick }, 'Click me')
       
       button.click()
       expect(onClick).toHaveBeenCalledTimes(1)
     })
 
     it('should handle attributes', () => {
-      const el = html`<div id="test" class="foo bar" data-value="123"></div>`
+      const el = jsx('div', { id: 'test', className: 'foo bar', 'data-value': '123' })
       expect(el.id).toBe('test')
       expect(el.className).toBe('foo bar')
       expect(el.getAttribute('data-value')).toBe('123')
@@ -170,7 +171,7 @@ describe('core.js', () => {
 
     it('should handle reactive attributes', () => {
       const [className, setClassName] = $('initial')
-      const el = html`<div class=${className}></div>`
+      const el = jsx('div', { className: className })
       expect(el.className).toBe('initial')
       
       setClassName('updated')
@@ -178,18 +179,18 @@ describe('core.js', () => {
     })
 
     it('should handle boolean attributes', () => {
-      const el1 = html`<button disabled=${true}>Disabled</button>`
+      const el1 = jsx('button', { disabled: true }, 'Disabled')
       expect(el1.disabled).toBe(true)
       
-      const el2 = html`<button disabled=${false}>Enabled</button>`
+      const el2 = jsx('button', { disabled: false }, 'Enabled')
       expect(el2.disabled).toBe(false)
     })
 
     it('should handle fragments with frag tag', () => {
-      const frag = html`<frag>
-        <div>First</div>
-        <div>Second</div>
-      </frag>`
+      const frag = jsx(Fragment, null,
+        jsx('div', null, 'First'),
+        jsx('div', null, 'Second')
+      )
       expect(frag.style.display).toBe('contents')
       expect(frag.children).toHaveLength(2)
       expect(frag.children[0].textContent).toBe('First')
@@ -205,29 +206,29 @@ describe('core.js', () => {
     })
 
     it('should render element to container', () => {
-      const el = html`<span>Test</span>`
+      const el = jsx('span', null, 'Test')
       render(el, container)
       expect(container.children).toHaveLength(1)
       expect(container.children[0].textContent).toBe('Test')
     })
 
     it('should render function result to container', () => {
-      const component = () => html`<span>Function Result</span>`
+      const component = () => jsx('span', null, 'Function Result')
       render(component, container)
       expect(container.children[0].textContent).toBe('Function Result')
     })
 
     it('should clean up previous content', () => {
-      render(html`<div>First</div>`, container)
+      render(jsx('div', null, 'First'), container)
       expect(container.children).toHaveLength(1)
       
-      render(html`<div>Second</div>`, container)
+      render(jsx('div', null, 'Second'), container)
       expect(container.children).toHaveLength(1)
       expect(container.children[0].textContent).toBe('Second')
     })
 
     it('should return dispose function', () => {
-      const result = render(html`<div>Test</div>`, container)
+      const result = render(jsx('div', null, 'Test'), container)
       expect(result.dispose).toBeDefined()
       expect(typeof result.dispose).toBe('function')
       
@@ -236,8 +237,8 @@ describe('core.js', () => {
     })
 
     it('should throw for invalid container', () => {
-      expect(() => render(html`<div></div>`, null)).toThrow('render() expects a DOM element as container')
-      expect(() => render(html`<div></div>`, 'not an element')).toThrow('render() expects a DOM element as container')
+      expect(() => render(jsx('div'), null)).toThrow('render() expects a DOM element as container')
+      expect(() => render(jsx('div'), 'not an element')).toThrow('render() expects a DOM element as container')
     })
   })
 
@@ -245,8 +246,8 @@ describe('core.js', () => {
     it('should render true case when condition is truthy', () => {
       const [isLoading, setLoading] = $(true)
       const el = $.if(isLoading, 
-        () => html`<div>Loading...</div>`,
-        () => html`<div>Ready</div>`
+        () => jsx('div', null, 'Loading...'),
+        () => jsx('div', null, 'Ready')
       )
       
       expect(el.textContent).toBe('Loading...')
@@ -255,8 +256,8 @@ describe('core.js', () => {
     it('should render false case when condition is falsy', () => {
       const [isLoading, setLoading] = $(false)
       const el = $.if(isLoading, 
-        () => html`<div>Loading...</div>`,
-        () => html`<div>Ready</div>`
+        () => jsx('div', null, 'Loading...'),
+        () => jsx('div', null, 'Ready')
       )
       
       expect(el.textContent).toBe('Ready')
@@ -265,8 +266,8 @@ describe('core.js', () => {
     it('should update when signal changes', () => {
       const [isLoading, setLoading] = $(true)
       const el = $.if(isLoading, 
-        () => html`<div>Loading...</div>`,
-        () => html`<div>Ready</div>`
+        () => jsx('div', null, 'Loading...'),
+        () => jsx('div', null, 'Ready')
       )
       
       expect(el.textContent).toBe('Loading...')
@@ -276,7 +277,7 @@ describe('core.js', () => {
 
     it('should render nothing when false case is omitted and condition is falsy', () => {
       const [condition, setCondition] = $(false)
-      const el = $.if(condition, () => html`<div>True</div>`)
+      const el = $.if(condition, () => jsx('div', null, 'True'))
       
       expect(el.textContent).toBe('')
       setCondition(true)
@@ -284,7 +285,7 @@ describe('core.js', () => {
     })
 
     it('should throw for non-signal first argument', () => {
-      expect(() => $.if('not a signal', () => html`<div>test</div>`)).toThrow('$.if() expects a signal as first argument')
+      expect(() => $.if('not a signal', () => jsx('div', null, 'test'))).toThrow('$.if() expects a signal as first argument')
     })
   })
 
@@ -332,7 +333,7 @@ describe('core.js', () => {
   describe('$.list', () => {
     it('should render simple list without keys', () => {
       const [items, setItems] = $(['a', 'b', 'c'])
-      const el = $.list(items, item => html`<div>${item}</div>`)
+      const el = $.list(items, item => jsx('div', null, item))
       
       expect(el.children).toHaveLength(3)
       expect(el.children[0].textContent).toBe('a')
@@ -342,7 +343,7 @@ describe('core.js', () => {
 
     it('should update list when signal changes', () => {
       const [items, setItems] = $([1, 2])
-      const el = $.list(items, item => html`<span>${item}</span>`)
+      const el = $.list(items, item => jsx('span', null, item))
       
       expect(el.children).toHaveLength(2)
       setItems([1, 2, 3, 4])
@@ -352,7 +353,7 @@ describe('core.js', () => {
 
     it('should handle empty list', () => {
       const [items, setItems] = $([])
-      const el = $.list(items, item => html`<div>${item}</div>`)
+      const el = $.list(items, item => jsx('div', null, item))
       
       expect(el.children).toHaveLength(0)
       
@@ -370,7 +371,7 @@ describe('core.js', () => {
       const el = $.list(
         items,
         item => {
-          const div = html`<div>${item.name}</div>`
+          const div = jsx('div', null, item.name)
           div.dataset.testId = item.id
           return div
         },
@@ -401,7 +402,7 @@ describe('core.js', () => {
 
     it('should pass index to render function', () => {
       const [items] = $(['a', 'b', 'c'])
-      const el = $.list(items, (item, index) => html`<div>${index}: ${item}</div>`)
+      const el = $.list(items, (item, index) => jsx('div', null, index, ': ', item))
       
       expect(el.children[0].textContent).toBe('0: a')
       expect(el.children[1].textContent).toBe('1: b')
@@ -432,7 +433,7 @@ describe('core.js', () => {
     })
 
     it('should work with html template', () => {
-      const element = html`<div>${$.DHTML('<strong>Bold text</strong>')}</div>`
+      const element = jsx('div', null, $.DHTML('<strong>Bold text</strong>'))
       expect(element.innerHTML).toBe('<strong>Bold text</strong>')
     })
   })

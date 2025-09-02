@@ -1,8 +1,9 @@
 /**
- * @fileoverview RainJS Component System
+ * @fileoverview RainWC Component System
  */
 
-import { html, render, $ } from './core.js'
+import { render, $ } from './core.js'
+import { jsx } from './jsx.js'
 
 /**
  * @private
@@ -12,7 +13,7 @@ function validateRainParams(name, propNames, factory) {
     factory = propNames
     propNames = []
   }
-
+  
   if (!name || typeof name !== 'string') {
     throw new Error('Component name is required and must be a string')
   }
@@ -22,7 +23,7 @@ function validateRainParams(name, propNames, factory) {
   if (propNames && !Array.isArray(propNames)) {
     throw new Error('Props must be an array of strings')
   }
-
+  
   return { name, propNames: propNames || [], factory }
 }
 
@@ -56,28 +57,28 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
     static get observedAttributes() {
       return this._propNames || []
     }
-
+    
     constructor() {
       super()
-
+      
       const componentPropNames = this.constructor._propNames
-
+      
       const props = {}
       this._propSetters = {}
-
+      
       for (const propName of componentPropNames || []) {
         const [getter, setter] = $(this.getAttribute(propName) || '')
         props[propName] = getter
         this._propSetters[propName] = setter
       }
-
+      
       setupLifecycleHooks(this)
       setupMemoryManagement(this)
-
+      
       const root = this.attachShadow({ mode: shadowMode })
-
+      
       currentInstance = this
-
+      
       this.emit = (eventName, detail) => {
         this.dispatchEvent(
           new CustomEvent(eventName, {
@@ -87,29 +88,29 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
           })
         )
       }
-
+      
       let template
       try {
         template = factory.call(this, props)
       } catch (error) {
         console.error(`Component error in ${name} during factory:`, error)
-        template = () => html`<div style="color: red; padding: 1rem;">
-          Component "${name}" failed to render. Check console for details.
-        </div>`
+        template = () => jsx('div', { 
+          style: { color: 'red', padding: '1rem' }
+        }, `Component "${name}" failed to render. Check console for details.`)
       }
-
+      
       currentInstance = null
-
+      
       let templateResult
       try {
         templateResult = template()
       } catch (error) {
         console.error(`Component error in ${name} during render:`, error)
-        templateResult = html`<div style="color: red; padding: 1rem;">
-          Component "${name}" failed to render. Check console for details.
-        </div>`
+        templateResult = jsx('div', { 
+          style: { color: 'red', padding: '1rem' }
+        }, `Component "${name}" failed to render. Check console for details.`)
       }
-
+      
       try {
         render(templateResult, root)
       } catch (renderError) {
@@ -118,25 +119,25 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
           <strong style="color: #c00;">Critical Render Error: ${name}</strong>
         </div>`
       }
-
+      
       this._root = root
       this._isMounted = false
     }
-
+    
     _cleanupElement(element) {
       if (element._listCleanup && typeof element._listCleanup === 'function') {
         element._listCleanup()
         element._listCleanup = null
       }
-
+      
       Array.from(element.children).forEach(child => {
         this._cleanupElement(child)
       })
     }
-
+    
     connectedCallback() {
       this._isMounted = true
-
+      
       this._m?.forEach(cb => {
         try {
           cb()
@@ -145,7 +146,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         }
       })
     }
-
+    
     disconnectedCallback() {
       this._cleanups?.forEach(cleanup => {
         if (typeof cleanup === 'function') {
@@ -156,7 +157,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
           }
         }
       })
-
+      
       this._um?.forEach(cb => {
         try {
           cb()
@@ -165,16 +166,16 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         }
       })
     }
-
+    
     attributeChangedCallback(attrName, oldValue, newValue) {
       if (this._propSetters && this._propSetters[attrName]) {
         this._propSetters[attrName](newValue || '')
       }
     }
   }
-
+  
   ComponentClass._propNames = propNames
-
+  
   return ComponentClass
 }
 
@@ -188,20 +189,20 @@ let currentInstance
  * @returns {boolean}
  * @example
  * rain('my-button', ['label'], function(props) {
- *   return () => html`<button>${props.label()}</button>`
+ *   return () => <button>{props.label()}</button>
  * })
  */
 function rain(name, propNames, factory) {
   try {
     const { name: validatedName, propNames: validatedPropNames, factory: validatedFactory } = validateRainParams(name, propNames, factory)
-
+    
     if (customElements.get(validatedName)) {
       if (typeof window !== 'undefined' && window.RAIN_DEBUG) {
         console.log(`[Rain:Component] '${validatedName}' already defined, skipping`)
       }
       return true
     }
-
+    
     const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'closed')
     customElements.define(validatedName, ComponentClass)
     return true
@@ -219,20 +220,20 @@ function rain(name, propNames, factory) {
  * @returns {boolean}
  * @example
  * rain.open('my-card', ['title'], function(props) {
- *   return () => html`<div>${props.title()}</div>`
+ *   return () => <div>{props.title()}</div>
  * })
  */
 rain.open = function(name, propNames, factory) {
   try {
     const { name: validatedName, propNames: validatedPropNames, factory: validatedFactory } = validateRainParams(name, propNames, factory)
-
+    
     if (customElements.get(validatedName)) {
       if (typeof window !== 'undefined' && window.RAIN_DEBUG) {
         console.log(`[Rain:Component] '${validatedName}' already defined, skipping`)
       }
       return true
     }
-
+    
     const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'open')
     customElements.define(validatedName, ComponentClass)
     return true

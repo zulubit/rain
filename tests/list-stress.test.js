@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
-import { $, html } from '../src/core.js'
+import { $ } from '../src/core.js'
+import { jsx } from '../src/jsx.js'
 
 describe('List Reconciliation - Stress Tests', () => {
   function createTrackedItem(id, name) {
-    const div = html`<div class="item" data-id="${id}">${name}</div>`
+    const div = jsx('div', { className: 'item', 'data-id': id }, name)
     div._nodeId = `node-${id}-${Math.random()}` // Unique identity
     return div
   }
@@ -109,8 +110,8 @@ describe('List Reconciliation - Stress Tests', () => {
           div.dataset.id = item.id
           
           // Nested reactive content
-          const counterEl = html`<span>Count: ${item.counter}</span>`
-          const statusEl = html`<span style=${() => `display: ${item.visible() ? 'inline' : 'none'}`}>Visible</span>`
+          const counterEl = jsx('span', null, 'Count: ', item.counter)
+          const statusEl = jsx('span', { style: () => `display: ${item.visible() ? 'inline' : 'none'}` }, 'Visible')
           
           div.appendChild(counterEl)
           div.appendChild(statusEl)
@@ -212,7 +213,7 @@ describe('List Reconciliation - Stress Tests', () => {
 
       const el = $.list(
         items,
-        item => html`<div>${item.name}</div>`,
+        item => jsx('div', null, item.name),
         item => item.key
       )
 
@@ -241,7 +242,7 @@ describe('List Reconciliation - Stress Tests', () => {
 
       const el = $.list(
         items,
-        item => html`<div data-id="${item.id}">${item.name}</div>`,
+        item => jsx('div', { 'data-id': item.id }, item.name),
         item => item.id
       )
 

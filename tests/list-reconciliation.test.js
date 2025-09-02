@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
-import { $, html } from '../src/core.js'
+import { $ } from '../src/core.js'
+import { jsx } from '../src/jsx.js'
 
 describe('List Reconciliation - Advanced', () => {
   // Helper to create items with unique DOM markers
   function createItem(id, name) {
-    const div = html`<div class="item">${name}</div>`
+    const div = jsx('div', { className: 'item' }, name)
     div.dataset.id = id
     div._testMarker = `item-${id}` // Unique marker to track DOM node identity
     return div
@@ -260,7 +261,7 @@ describe('List Reconciliation - Advanced', () => {
       const el = $.list(
         items,
         item => {
-          const div = html`<div data-id=${item.id}>Count: ${item.counter}</div>`
+          const div = jsx('div', { 'data-id': item.id }, 'Count: ', item.counter)
           return div
         },
         item => item.id

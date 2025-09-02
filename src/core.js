@@ -1,8 +1,7 @@
 /**
- * @fileoverview RainJS Core - Reactive templates with HTM and Preact signals
+ * @fileoverview RainWC Core - Reactive system and utilities
  */
 
-import htm from 'htm'
 import { signal, computed, effect } from '@preact/signals-core'
 
 const SIGNAL_SYMBOL = Symbol('rain.signal')
@@ -14,213 +13,6 @@ const SIGNAL_SYMBOL = Symbol('rain.signal')
  */
 function isReactive(value) {
   return typeof value === 'function' && value[SIGNAL_SYMBOL]
-}
-
-/**
- * @param {Element} element
- * @param {string} key
- * @param {any} val
- * @private
- */
-function setElementValue(element, key, val) {
-  if (key in element && typeof element[key] !== 'function') {
-    element[key] = val
-  } else {
-    if (val == null || val === false) {
-      element.removeAttribute(key)
-    } else if (val === true) {
-      element.setAttribute(key, '')
-    } else {
-      element.setAttribute(key, String(val))
-    }
-  }
-}
-
-/**
- * @param {Element} element
- * @param {string} key
- * @param {any} value
- * @private
- */
-function processAttribute(element, key, value) {
-  if (key.startsWith('@') && typeof value === 'function') {
-    const eventName = key.slice(1)
-    element.addEventListener(eventName, value)
-  } else if (key.startsWith('.')) {
-    const propName = key.slice(1)
-    if (isReactive(value)) {
-      effect(() => {
-        element[propName] = value()
-      })
-    } else if (typeof value === 'function' && value[SIGNAL_SYMBOL]) {
-      effect(() => {
-        element[propName] = value()
-      })
-    } else {
-      element[propName] = value
-    }
-  } else if (isReactive(value)) {
-    effect(() => {
-      setElementValue(element, key, value())
-    })
-  } else if (typeof value === 'function' && value[SIGNAL_SYMBOL]) {
-    effect(() => {
-      setElementValue(element, key, value())
-    })
-  } else {
-    setElementValue(element, key, value)
-  }
-}
-
-/**
- * @param {string} type
- * @param {Object|null} props
- * @param {...any} children
- * @returns {Element}
- * @private
- */
-function h(type, props, ...children) {
-  if (type === 'frag') {
-    const fragment = document.createElement('div')
-    fragment.style.display = 'contents'
-
-    for (const child of children.flat(Infinity)) {
-      processChild(fragment, child)
-    }
-
-    return fragment
-  }
-
-  if (typeof type !== 'string' || !type) {
-    throw new Error(`Invalid element type: ${type}`)
-  }
-
-  const element = document.createElement(type)
-  let selectValueSignal = null
-
-  for (const child of children.flat(Infinity)) {
-    processChild(element, child)
-  }
-
-  if (props) {
-    for (const [key, value] of Object.entries(props)) {
-      if (element.tagName === 'SELECT' && key === 'value' && isReactive(value)) {
-        selectValueSignal = value
-      } else {
-        processAttribute(element, key, value)
-      }
-    }
-  }
-
-  if (selectValueSignal) {
-    effect(() => {
-      element.value = selectValueSignal()
-    })
-  }
-
-  return element
-}
-
-/**
- * @param {Element} element
- * @param {any} child
- * @private
- */
-function processChild(element, child) {
-  if (child == null) return
-
-  if (typeof child === 'string' || typeof child === 'number') {
-    element.appendChild(document.createTextNode(String(child)))
-  } else if (typeof child === 'function' && child[SIGNAL_SYMBOL]) {
-    let currentChild = null
-    effect(() => {
-      const value = child()
-      if (value instanceof Node) {
-        if (currentChild && currentChild.parentNode === element) {
-          element.removeChild(currentChild)
-        }
-        element.appendChild(value)
-        currentChild = value
-      } else {
-        if (!currentChild || currentChild.nodeType !== Node.TEXT_NODE) {
-          if (currentChild && currentChild.parentNode === element) {
-            element.removeChild(currentChild)
-          }
-          currentChild = document.createTextNode('')
-          element.appendChild(currentChild)
-        }
-        currentChild.textContent = String(value ?? '')
-      }
-    })
-  } else if (child instanceof Node) {
-    element.appendChild(child)
-  }
-}
-
-const htmBound = htm.bind(h)
-
-let instanceCounter = 0
-const getInstanceKey = () => ++instanceCounter
-
-/**
- * HTM template function for creating reactive DOM elements
- * @param {TemplateStringsArray} strings
- * @param {...any} values
- * @returns {Element}
- * @example html`<div>Hello ${name}</div>`
- */
-function html(strings, ...values) {
-  const modifiedStrings = [...strings]
-  
-  // Trim whitespace from the first and last template strings to prevent multiple root elements
-  if (modifiedStrings.length > 0) {
-    modifiedStrings[0] = modifiedStrings[0].trimStart()
-    modifiedStrings[modifiedStrings.length - 1] = modifiedStrings[modifiedStrings.length - 1].trimEnd()
-  }
-  
-  modifiedStrings[modifiedStrings.length - 1] += `<!-- ${getInstanceKey()} -->`
-
-  return htmBound(modifiedStrings, ...values)
-}
-
-/**
- * @param {Element} container
- * @private
- */
-function cleanupContainer(container) {
-  Array.from(container.children).forEach(child => {
-    if (!child._listCleanup) {
-      child.remove()
-    }
-  })
-}
-
-/**
- * Renders elements to a container with cleanup
- * @param {Element | (() => Element)} elementOrFn
- * @param {Element} container
- * @returns {{dispose: () => void}}
- */
-function render(elementOrFn, container) {
-  if (!container || !container.appendChild) {
-    throw new Error(`render() expects a DOM element as container, got ${typeof container}`)
-  }
-
-  cleanupContainer(container)
-
-  const element = typeof elementOrFn === 'function' ? elementOrFn() : elementOrFn
-
-  if (element instanceof Node) {
-    container.appendChild(element)
-
-    return {
-      dispose: () => {
-        cleanupContainer(container)
-      }
-    }
-  }
-
-  return { dispose: () => { } }
 }
 
 /**
@@ -327,42 +119,13 @@ $.emit = function(eventName, detail, target) {
 }
 
 /**
- * Creates reactive CSS from template literal
- * @param {TemplateStringsArray} strings
- * @param {...any} values
- * @returns {() => Element}
- * @example
- * const styles = css`.container { background: ${bgColor}; }`
- */
-function css(strings, ...values) {
-  if (!Array.isArray(strings)) {
-    throw new Error('css must be used as a template literal')
-  }
-
-  return $.computed(() => {
-    let cssText = ''
-    for (let i = 0; i < strings.length; i++) {
-      cssText += strings[i]
-      if (i < values.length) {
-        const value = values[i]
-        cssText += typeof value === 'function' && value[SIGNAL_SYMBOL] ? value() : value
-      }
-    }
-
-    const style = document.createElement('style')
-    style.textContent = cssText
-    return style
-  })
-}
-
-/**
  * Conditional rendering
  * @param {() => any} conditionSignal
  * @param {() => Element} trueFn
  * @param {() => Element} [falseFn]
  * @returns {Element}
  * @example
- * $.if(isLoading, () => html`<div>Loading...</div>`)
+ * $.if(isLoading, () => <div>Loading...</div>)
  */
 $.if = function(conditionSignal, trueFn, falseFn) {
   if (typeof conditionSignal !== 'function' || !conditionSignal[SIGNAL_SYMBOL]) {
@@ -403,7 +166,7 @@ $.if = function(conditionSignal, trueFn, falseFn) {
  * @param {(item: any, index: number) => string | number} [keyFn]
  * @returns {Element}
  * @example
- * $.list(items, item => html`<li>${item.name}</li>`, item => item.id)
+ * $.list(items, item => <li>{item.name}</li>, item => item.id)
  */
 $.list = function(itemsSignal, renderFn, keyFn) {
   const container = document.createElement('div')
@@ -533,6 +296,73 @@ $.DHTML = function(html) {
   return fragment
 }
 
-export { $, html, css }
+/**
+ * @param {Element} container
+ * @private
+ */
+function cleanupContainer(container) {
+  Array.from(container.children).forEach(child => {
+    if (!child._listCleanup) {
+      child.remove()
+    }
+  })
+}
 
-export { render }
+/**
+ * Renders elements to a container with cleanup
+ * @param {Element | (() => Element)} elementOrFn
+ * @param {Element} container
+ * @returns {{dispose: () => void}}
+ */
+function render(elementOrFn, container) {
+  if (!container || !container.appendChild) {
+    throw new Error(`render() expects a DOM element as container, got ${typeof container}`)
+  }
+
+  cleanupContainer(container)
+
+  const element = typeof elementOrFn === 'function' ? elementOrFn() : elementOrFn
+
+  if (element instanceof Node) {
+    container.appendChild(element)
+
+    return {
+      dispose: () => {
+        cleanupContainer(container)
+      }
+    }
+  }
+
+  return { dispose: () => { } }
+}
+
+/**
+ * Creates reactive CSS from template literal
+ * @param {TemplateStringsArray} strings
+ * @param {...any} values
+ * @returns {() => Element}
+ * @example
+ * const styles = css`.container { background: ${bgColor}; }`
+ */
+function css(strings, ...values) {
+  if (!Array.isArray(strings)) {
+    throw new Error('css must be used as a template literal')
+  }
+
+  return $.computed(() => {
+    let cssText = ''
+    for (let i = 0; i < strings.length; i++) {
+      cssText += strings[i]
+      if (i < values.length) {
+        const value = values[i]
+        cssText += typeof value === 'function' && value[SIGNAL_SYMBOL] ? value() : value
+      }
+    }
+
+    const style = document.createElement('style')
+    style.textContent = cssText
+    return style
+  })
+}
+
+export { $, SIGNAL_SYMBOL, isReactive, render, css }
