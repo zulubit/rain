@@ -22,7 +22,7 @@ rain('my-counter', function() {
 - **Web Components** with reactive templates
 - **Tiny size** - 16KB minified ESM bundle
 - **TypeScript friendly** with full declarations
-- **Zero config** with Vite plugin
+- **Minimal config** with Vite plugin
 
 ## Installation
 
@@ -56,16 +56,33 @@ function MyComponent() {
 rain('my-component', MyComponent)
 ```
 
-### Manual Build Configuration
+### esbuild Setup
 
-If not using the Vite plugin, configure your build tool:
+For esbuild users:
 
 ```js
-// For esbuild/Vite
+// build.js
+import { build } from 'esbuild'
+import { rainwc } from 'rainwc/esbuild-plugin'
+
+await build({
+  entryPoints: ['src/app.jsx'],
+  outfile: 'dist/app.js',
+  bundle: true,
+  plugins: [rainwc()]
+})
+```
+
+### Manual Build Configuration
+
+If not using plugins, configure your build tool:
+
+```js
 {
   jsx: 'transform',
   jsxFactory: 'jsx',
-  jsxFragment: 'Fragment'
+  jsxFragment: 'Fragment',
+  jsxInject: `import { jsx, Fragment } from 'rainwc'`
 }
 ```
 
