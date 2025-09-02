@@ -18,7 +18,8 @@ export function rainwc(options = {}) {
           ...config.esbuild,
           jsx: 'transform',
           jsxFactory: options.jsxFactory || 'jsx',
-          jsxFragment: options.jsxFragment || 'Fragment'
+          jsxFragment: options.jsxFragment || 'Fragment',
+          jsxInject: options.jsxInject || `import { jsx, Fragment } from 'rainwc'`
         }
         
         if (!options.silent) {

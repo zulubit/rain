@@ -4,7 +4,7 @@
 
 import { signal, computed, effect } from '@preact/signals-core'
 
-const SIGNAL_SYMBOL = Symbol('rain.signal')
+const SIGNAL_SYMBOL = Symbol.for('rain.signal')
 
 /**
  * @param {any} value

@@ -50,7 +50,7 @@ import { rain, $ } from 'rainwc'
 
 function MyComponent() {
   const [count, setCount] = $(0)
-  return <button onClick={() => setCount(count() + 1)}>Count: {count}</button>
+  return () => <button onClick={() => setCount(count() + 1)}>Count: {count}</button>
 }
 
 rain('my-component', MyComponent)

@@ -5,8 +5,8 @@
 // Core exports - reactive primitives
 export { $, css, render } from './core.js'
 
-// JSX exports (Fragment is internal - use <></> syntax)
-export { jsx, jsx as h } from './jsx.js'
+// JSX exports
+export { jsx, jsx as h, Fragment } from './jsx.js'
 
-// Component system exports  
+// Component system exports
 export { rain, onMounted, onUnmounted } from './component.js'

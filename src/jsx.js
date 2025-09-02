@@ -2,8 +2,7 @@
  * @fileoverview RainWC JSX Implementation - JSX pragma and Fragment
  */
 
-import { SIGNAL_SYMBOL, isReactive } from './core.js'
-import { effect } from '@preact/signals-core'
+import { isReactive, $ } from './core.js'
 
 /**
  * @param {Element} element
@@ -40,7 +39,7 @@ function processAttribute(element, key, value) {
   // Handle direct property bindings (value, checked, etc.)
   else if (shouldBindAsProperty(element, key)) {
     if (isReactive(value)) {
-      effect(() => {
+      $.effect(() => {
         element[key] = value()
       })
     } else {
@@ -50,7 +49,7 @@ function processAttribute(element, key, value) {
   // Handle className special case
   else if (key === 'className') {
     if (isReactive(value)) {
-      effect(() => {
+      $.effect(() => {
         element.className = value()
       })
     } else {
@@ -67,7 +66,7 @@ function processAttribute(element, key, value) {
   }
   // Handle reactive style
   else if (key === 'style' && isReactive(value)) {
-    effect(() => {
+    $.effect(() => {
       const styleValue = value()
       if (typeof styleValue === 'object') {
         Object.assign(element.style, styleValue)
@@ -78,7 +77,7 @@ function processAttribute(element, key, value) {
   }
   // Handle reactive attributes
   else if (isReactive(value)) {
-    effect(() => {
+    $.effect(() => {
       setElementValue(element, key, value())
     })
   }
@@ -98,13 +97,13 @@ function processAttribute(element, key, value) {
 function shouldBindAsProperty(element, key) {
   // Common properties that should be bound directly
   const propertyNames = ['value', 'checked', 'selected', 'disabled', 'readOnly', 'multiple']
-  
+
   // For inputs, textareas, and selects, bind value as property
-  if ((element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT') && 
+  if ((element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT') &&
       propertyNames.includes(key)) {
     return true
   }
-  
+
   return false
 }
 
@@ -115,14 +114,14 @@ function shouldBindAsProperty(element, key) {
  */
 function processChild(element, child) {
   if (child == null || child === false) return
-  
+
   if (Array.isArray(child)) {
     child.forEach(c => processChild(element, c))
   } else if (typeof child === 'string' || typeof child === 'number') {
     element.appendChild(document.createTextNode(String(child)))
   } else if (isReactive(child)) {
     let currentChild = null
-    effect(() => {
+    $.effect(() => {
       const value = child()
       if (value instanceof Node) {
         if (currentChild && currentChild.parentNode === element) {
@@ -155,9 +154,9 @@ function processChild(element, child) {
 export function Fragment(props, ...children) {
   const fragment = document.createElement('div')
   fragment.style.display = 'contents'
-  
+
   children.flat(Infinity).forEach(child => processChild(fragment, child))
-  
+
   return fragment
 }
 
@@ -178,24 +177,24 @@ export function jsx(type, props, ...children) {
     // Regular function components
     return type({ ...props, children: children.length > 1 ? children : children[0] })
   }
-  
+
   // Handle string types (HTML elements)
   if (typeof type !== 'string' || !type) {
     throw new Error(`Invalid element type: ${type}`)
   }
-  
+
   const element = document.createElement(type)
   let selectValueSignal = null
-  
+
   // Process children first
   children.flat(Infinity).forEach(child => processChild(element, child))
-  
+
   // Process props/attributes
   if (props) {
     for (const [key, value] of Object.entries(props)) {
       // Skip children prop (already handled)
       if (key === 'children') continue
-      
+
       // Special handling for select value
       if (element.tagName === 'SELECT' && key === 'value' && isReactive(value)) {
         selectValueSignal = value
@@ -204,14 +203,14 @@ export function jsx(type, props, ...children) {
       }
     }
   }
-  
+
   // Handle select value reactivity after options are added
   if (selectValueSignal) {
-    effect(() => {
+    $.effect(() => {
       element.value = selectValueSignal()
     })
   }
-  
+
   return element
 }
 
