@@ -1,6 +1,5 @@
 /**
  * @fileoverview RainJS Component System
- * @version 0.0.10
  */
 
 import { html, render, $ } from './core.js'

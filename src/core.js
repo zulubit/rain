@@ -1,6 +1,5 @@
 /**
  * @fileoverview RainJS Core - Reactive templates with HTM and Preact signals
- * @version 0.0.10
  */
 
 import htm from 'htm'
@@ -172,6 +171,13 @@ const getInstanceKey = () => ++instanceCounter
  */
 function html(strings, ...values) {
   const modifiedStrings = [...strings]
+  
+  // Trim whitespace from the first and last template strings to prevent multiple root elements
+  if (modifiedStrings.length > 0) {
+    modifiedStrings[0] = modifiedStrings[0].trimStart()
+    modifiedStrings[modifiedStrings.length - 1] = modifiedStrings[modifiedStrings.length - 1].trimEnd()
+  }
+  
   modifiedStrings[modifiedStrings.length - 1] += `<!-- ${getInstanceKey()} -->`
 
   return htmBound(modifiedStrings, ...values)

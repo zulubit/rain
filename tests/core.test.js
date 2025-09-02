@@ -114,6 +114,30 @@ describe('core.js', () => {
       expect(el.children[0].textContent).toBe('Nested')
     })
 
+    it('should handle whitespace around templates', () => {
+      expect(() => {
+        const el = html` <div>asdf</div> `
+        expect(el.tagName).toBe('DIV')
+        expect(el.textContent).toBe('asdf')
+      }).not.toThrow()
+    })
+
+    it('should handle leading whitespace in templates', () => {
+      expect(() => {
+        const el = html` <div>asdf</div>`
+        expect(el.tagName).toBe('DIV')  
+        expect(el.textContent).toBe('asdf')
+      }).not.toThrow()
+    })
+
+    it('should handle trailing whitespace in templates', () => {
+      expect(() => {
+        const el = html`<div>asdf</div> `
+        expect(el.tagName).toBe('DIV')
+        expect(el.textContent).toBe('asdf')
+      }).not.toThrow()
+    })
+
     it('should interpolate static values', () => {
       const name = 'World'
       const el = html`<div>Hello ${name}</div>`
