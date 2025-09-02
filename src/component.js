@@ -1,12 +1,11 @@
 /**
- * @fileoverview RainJS Component System - Web Components with reactive templates
+ * @fileoverview RainJS Component System
  * @version 0.0.9
  */
 
 import { html, render, $ } from './core.js'
 
 /**
- * Validates rain component parameters
  * @private
  */
 function validateRainParams(name, propNames, factory) {
@@ -29,8 +28,7 @@ function validateRainParams(name, propNames, factory) {
 }
 
 /**
- * Sets up lifecycle hook arrays for component
- * @param {HTMLElement} component - Component instance
+ * @param {HTMLElement} component
  * @private
  */
 function setupLifecycleHooks(component) {
@@ -39,8 +37,7 @@ function setupLifecycleHooks(component) {
 }
 
 /**
- * Sets up memory management for component
- * @param {HTMLElement} component - Component instance
+ * @param {HTMLElement} component
  * @private
  */
 function setupMemoryManagement(component) {
@@ -48,12 +45,11 @@ function setupMemoryManagement(component) {
 }
 
 /**
- * Creates the component class with all necessary methods
- * @param {string} name - Component name
- * @param {Record<string, any>} propDefs - Property definitions
- * @param {Function} factory - Factory function
- * @param {'open' | 'closed'} shadowMode - Shadow DOM mode
- * @returns {typeof HTMLElement} Component class
+ * @param {string} name
+ * @param {string[]} propNames
+ * @param {Function} factory
+ * @param {'open' | 'closed'} shadowMode
+ * @returns {typeof HTMLElement}
  * @private
  */
 function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
@@ -65,10 +61,8 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
     constructor() {
       super()
 
-      // Get propNames from the class
       const componentPropNames = this.constructor._propNames
 
-      // Create signal tuples directly from propNames
       const props = {}
       this._propSetters = {}
 
@@ -81,7 +75,6 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
       setupLifecycleHooks(this)
       setupMemoryManagement(this)
 
-      // Create shadow DOM in constructor
       const root = this.attachShadow({ mode: shadowMode })
 
       currentInstance = this
@@ -108,7 +101,6 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
 
       currentInstance = null
 
-      // Render template immediately
       let templateResult
       try {
         templateResult = template()
@@ -182,45 +174,23 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
     }
   }
 
-  // Set the propNames on the class
   ComponentClass._propNames = propNames
 
   return ComponentClass
 }
 
-/**
- * @typedef RainComponent
- * @property {import('@preact/signals-core').Signal} _propsSignal - Reactive props signal
- * @property {(eventName: string, detail?: any) => void} emit - Emit custom events
- * @property {(() => void)[]} [_m] - Mounted hooks
- * @property {(() => void)[]} [_um] - Unmounted hooks
- */
-
-/**
- * @typedef {HTMLElement & RainComponent} RainHTMLElement
- */
-
-/** @type {RainComponent | null} */
 let currentInstance
 
 /**
- * Defines a reactive web component with built-in state management and styling
- * Uses closed shadow DOM by default for complete encapsulation
- * @param {string} name - Custom element tag name (must contain hyphen)
- * @param {string[] | Function} propNames - Array of prop names, or factory function
- * @param {Function} [factory] - Component factory function returning template function
- * @returns {boolean} True if component was successfully registered
- * @throws {Error} When name or factory is invalid
+ * Defines a reactive web component with closed shadow DOM
+ * @param {string} name
+ * @param {string[] | Function} propNames
+ * @param {Function} [factory]
+ * @returns {boolean}
  * @example
- * // Component with props
- * rain('my-button', ['label', 'disabled'], function(props) {
- *   return () => html`<button disabled=${props.disabled()}>${props.label()}</button>`;
- * });
- *
- * // Component without props
- * rain('my-card', function() {
- *   return () => html`<div class="card">Hello</div>`;
- * });
+ * rain('my-button', ['label'], function(props) {
+ *   return () => html`<button>${props.label()}</button>`
+ * })
  */
 function rain(name, propNames, factory) {
   try {
@@ -244,15 +214,14 @@ function rain(name, propNames, factory) {
 
 /**
  * Defines a reactive web component with open shadow DOM
- * @param {string} name - Custom element tag name (must contain hyphen)
- * @param {string[] | Function} propNames - Array of prop names, or factory function
- * @param {Function} [factory] - Component factory function returning template function
- * @returns {boolean} True if component was successfully registered
- * @throws {Error} When name or factory is invalid
+ * @param {string} name
+ * @param {string[] | Function} propNames
+ * @param {Function} [factory]
+ * @returns {boolean}
  * @example
  * rain.open('my-card', ['title'], function(props) {
- *   return () => html`<div class="card">${props.title()}</div>`;
- * });
+ *   return () => html`<div>${props.title()}</div>`
+ * })
  */
 rain.open = function(name, propNames, factory) {
   try {
@@ -275,13 +244,10 @@ rain.open = function(name, propNames, factory) {
 }
 
 /**
- * Registers a callback to run after component is mounted to DOM
- * @param {() => void} cb - Callback function to execute
+ * Registers a callback to run when component mounts
+ * @param {() => void} cb
  * @example
- * rain('my-component', function() {
- *   onMounted(() => console.log('Component mounted'));
- *   return () => html`<div>Hello</div>`;
- * });
+ * onMounted(() => console.log('mounted'))
  */
 function onMounted(cb) {
   if (!currentInstance) {
@@ -292,13 +258,10 @@ function onMounted(cb) {
 }
 
 /**
- * Registers a callback to run when component is removed from DOM
- * @param {() => void} cb - Callback function to execute
+ * Registers a callback to run when component unmounts
+ * @param {() => void} cb
  * @example
- * rain('my-component', function() {
- *   onUnmounted(() => console.log('Component unmounted'));
- *   return () => html`<div>Hello</div>`;
- * });
+ * onUnmounted(() => console.log('unmounted'))
  */
 function onUnmounted(cb) {
   if (!currentInstance) {

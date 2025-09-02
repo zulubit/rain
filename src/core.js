@@ -1,5 +1,5 @@
 /**
- * @fileoverview RainJS Core - Reactive template system with HTM and Preact signals
+ * @fileoverview RainJS Core - Reactive templates with HTM and Preact signals
  * @version 0.0.9
  */
 
@@ -9,9 +9,8 @@ import { signal, computed, effect } from '@preact/signals-core'
 const SIGNAL_SYMBOL = Symbol('rain.signal')
 
 /**
- * Check if a value is a reactive signal function
- * @param {any} value - Value to check
- * @returns {boolean} True if value is reactive
+ * @param {any} value
+ * @returns {boolean}
  * @private
  */
 function isReactive(value) {
@@ -19,10 +18,9 @@ function isReactive(value) {
 }
 
 /**
- * Helper function to set property or attribute on element
- * @param {Element} element - Target element
- * @param {string} key - Property/attribute name
- * @param {any} val - Value to set
+ * @param {Element} element
+ * @param {string} key
+ * @param {any} val
  * @private
  */
 function setElementValue(element, key, val) {
@@ -40,10 +38,9 @@ function setElementValue(element, key, val) {
 }
 
 /**
- * Process element attribute with reactive binding support
- * @param {Element} element - Target element
- * @param {string} key - Attribute/property name
- * @param {any} value - Attribute value
+ * @param {Element} element
+ * @param {string} key
+ * @param {any} value
  * @private
  */
 function processAttribute(element, key, value) {
@@ -77,13 +74,10 @@ function processAttribute(element, key, value) {
 }
 
 /**
- * HTM createElement function - creates DOM elements with reactive bindings
- * Always creates fresh DOM elements to ensure component instance isolation
- * @param {string} type - HTML tag name
- * @param {Object|null} props - Element properties and attributes
- * @param {...(Node|string|number|import('@preact/signals-core').Signal|Array)} children - Child elements or content
- * @returns {Element} Created DOM element
- * @throws {Error} When element type is invalid
+ * @param {string} type
+ * @param {Object|null} props
+ * @param {...any} children
+ * @returns {Element}
  * @private
  */
 function h(type, props, ...children) {
@@ -102,12 +96,9 @@ function h(type, props, ...children) {
     throw new Error(`Invalid element type: ${type}`)
   }
 
-  // Always create a fresh element - never reuse cached DOM elements
-  // This ensures component instance isolation
   const element = document.createElement(type)
   let selectValueSignal = null
 
-  // Process all children (completely flattened)
   for (const child of children.flat(Infinity)) {
     processChild(element, child)
   }
@@ -132,9 +123,8 @@ function h(type, props, ...children) {
 }
 
 /**
- * Process and append child element with reactive text support
- * @param {Element} element - Parent element
- * @param {Node|string|number|Function} child - Child to process
+ * @param {Element} element
+ * @param {any} child
  * @private
  */
 function processChild(element, child) {
@@ -168,28 +158,19 @@ function processChild(element, child) {
   }
 }
 
-/**
- * Internal HTM template function
- * @private
- */
 const htmBound = htm.bind(h)
 
-/**
- * Generate a unique cache-busting key for component instances
- */
 let instanceCounter = 0
 const getInstanceKey = () => ++instanceCounter
 
 /**
  * HTM template function for creating reactive DOM elements
- * Automatically adds cache-busting for component isolation and strips whitespace
- * @param {TemplateStringsArray} strings - Template string array
- * @param {...any} values - Template interpolation values
- * @returns {Element} Created DOM element
+ * @param {TemplateStringsArray} strings
+ * @param {...any} values
+ * @returns {Element}
  * @example html`<div>Hello ${name}</div>`
  */
 function html(strings, ...values) {
-  // Add a unique cache-buster to prevent HTM from reusing DOM elements between component instances
   const modifiedStrings = [...strings]
   modifiedStrings[modifiedStrings.length - 1] += `<!-- ${getInstanceKey()} -->`
 
@@ -197,8 +178,7 @@ function html(strings, ...values) {
 }
 
 /**
- * Clean up container children, preserving list containers
- * @param {Element} container - Container to clean up
+ * @param {Element} container
  * @private
  */
 function cleanupContainer(container) {
@@ -210,11 +190,10 @@ function cleanupContainer(container) {
 }
 
 /**
- * Renders elements to a container with cleanup management
- * @param {Element | (() => Element)} elementOrFn - Element or function returning element
- * @param {Element} container - Target container element
- * @returns {{dispose: () => void}} Cleanup object
- * @throws {Error} When elementOrFn doesn't return a valid DOM node
+ * Renders elements to a container with cleanup
+ * @param {Element | (() => Element)} elementOrFn
+ * @param {Element} container
+ * @returns {{dispose: () => void}}
  */
 function render(elementOrFn, container) {
   if (!container || !container.appendChild) {
@@ -239,14 +218,13 @@ function render(elementOrFn, container) {
 }
 
 /**
- * Creates a reactive signal with SolidJS-style tuple return
+ * Creates a reactive signal with tuple return
  * @template T
- * @param {T} initialValue - Initial value (primitives, objects, arrays)
- * @returns {[() => T, (value: T) => void]} Tuple of [getter, setter]
+ * @param {T} initialValue
+ * @returns {[() => T, (value: T) => void]}
  * @example
- * const [count, setCount] = $(0);
- * console.log(count()); // get value
- * setCount(5); // set value
+ * const [count, setCount] = $(0)
+ * setCount(5)
  */
 function $(initialValue) {
   const sig = signal(initialValue)
@@ -263,15 +241,12 @@ function $(initialValue) {
 }
 
 /**
- * Creates a computed signal that automatically updates when dependencies change
+ * Creates a computed signal that updates when dependencies change
  * @template T
- * @param {() => T} computation - Function that computes the value
- * @returns {() => T} Read-only computed accessor function
- * @throws {Error} When computation is not a function
+ * @param {() => T} computation
+ * @returns {() => T}
  * @example
- * const [count] = $(0);
- * const doubled = $.computed(() => count() * 2);
- * const fullName = $.computed(() => `${firstName()} ${lastName()}`);
+ * const doubled = $.computed(() => count() * 2)
  */
 $.computed = function(computation) {
   if (typeof computation !== 'function') {
@@ -285,13 +260,10 @@ $.computed = function(computation) {
 
 /**
  * Creates an effect that runs when dependencies change
- * @param {() => void} fn - Side effect function
- * @returns {() => void} Effect cleanup function
- * @throws {Error} When fn is not a function
+ * @param {() => void} fn
+ * @returns {() => void}
  * @example
- * const [count] = $(0);
- * const cleanup = $.effect(() => document.title = `Count: ${count()}`);
- * // Call cleanup() when no longer needed
+ * $.effect(() => document.title = `Count: ${count()}`)
  */
 $.effect = function(fn) {
   if (typeof fn !== 'function') {
@@ -302,15 +274,12 @@ $.effect = function(fn) {
 
 /**
  * Listen for custom events with automatic cleanup
- * @param {string} eventName - Name of the event to listen for
- * @param {(event: CustomEvent) => void} handler - Event handler function
- * @param {EventTarget} [target=document] - Target to listen on
- * @returns {() => void} Cleanup function
- * @throws {Error} When eventName is not a string
- * @throws {Error} When handler is not a function
+ * @param {string} eventName
+ * @param {(event: CustomEvent) => void} handler
+ * @param {EventTarget} [target=document]
+ * @returns {() => void}
  * @example
- * const cleanup = $.listen('user-changed', (e) => setUser(e.detail));
- * // Call cleanup() when no longer needed
+ * $.listen('user-changed', (e) => setUser(e.detail))
  */
 $.listen = function(eventName, handler, target = document) {
   if (typeof eventName !== 'string') {
@@ -328,11 +297,10 @@ $.listen = function(eventName, handler, target = document) {
 }
 
 /**
- * Emit custom events from current component context
- * @param {string} eventName - Name of the event to emit
- * @param {any} [detail] - Event detail data
- * @param {EventTarget} [target] - Target to emit from (defaults to current component or document)
- * @throws {Error} When eventName is not a string
+ * Emit custom events
+ * @param {string} eventName
+ * @param {any} [detail]
+ * @param {EventTarget} [target]
  * @example
  * $.emit('value-changed', { value: newValue })
  */
@@ -341,7 +309,6 @@ $.emit = function(eventName, detail, target) {
     throw new Error('$.emit expects eventName to be a string')
   }
 
-  // Use provided target or default to document for global events
   const emitter = target || document
 
   const event = new CustomEvent(eventName, {
@@ -354,17 +321,12 @@ $.emit = function(eventName, detail, target) {
 }
 
 /**
- * Creates a reactive CSS style element from template literal
- * @param {TemplateStringsArray} strings - Template string parts
- * @param {...any} values - Template interpolation values
- * @returns {() => Element} Computed signal returning reactive style element
- * @throws {Error} When not used as a template literal
+ * Creates reactive CSS from template literal
+ * @param {TemplateStringsArray} strings
+ * @param {...any} values
+ * @returns {() => Element}
  * @example
- * const styles = css`
- *   .container {
- *     background: ${theme() === 'dark' ? '#333' : '#fff'};
- *   }
- * `
+ * const styles = css`.container { background: ${bgColor}; }`
  */
 function css(strings, ...values) {
   if (!Array.isArray(strings)) {
@@ -388,13 +350,13 @@ function css(strings, ...values) {
 }
 
 /**
- * Simple conditional rendering
- * @param {() => any} conditionSignal - Signal function containing the condition
- * @param {() => Element} trueFn - Function to render when truthy
- * @param {() => Element} [falseFn] - Optional function to render when falsy
- * @returns {Element} Container element with conditionally rendered content
+ * Conditional rendering
+ * @param {() => any} conditionSignal
+ * @param {() => Element} trueFn
+ * @param {() => Element} [falseFn]
+ * @returns {Element}
  * @example
- * $.if(isLoading, () => html`<div>Loading...</div>`, () => html`<div>Ready!</div>`)
+ * $.if(isLoading, () => html`<div>Loading...</div>`)
  */
 $.if = function(conditionSignal, trueFn, falseFn) {
   if (typeof conditionSignal !== 'function' || !conditionSignal[SIGNAL_SYMBOL]) {
@@ -409,7 +371,6 @@ $.if = function(conditionSignal, trueFn, falseFn) {
   const cleanup = effect(() => {
     const condition = conditionSignal()
 
-    // Remove current element if exists
     if (currentElement && currentElement.parentNode === container) {
       currentElement.remove()
       currentElement = null
@@ -431,16 +392,12 @@ $.if = function(conditionSignal, trueFn, falseFn) {
 
 /**
  * Renders reactive lists with optional keyed reconciliation
- * @param {() => any[]} itemsSignal - Signal function containing array data
- * @param {(item: any, index: number) => Element} renderFn - Function to render each item
- * @param {(item: any, index: number) => string | number} [keyFn] - Optional key extraction function
- * @returns {Element} Container element with rendered list items
+ * @param {() => any[]} itemsSignal
+ * @param {(item: any, index: number) => Element} renderFn
+ * @param {(item: any, index: number) => string | number} [keyFn]
+ * @returns {Element}
  * @example
- * // With keyed reconciliation (recommended)
  * $.list(items, item => html`<li>${item.name}</li>`, item => item.id)
- *
- * // Simple re-render (no keys)
- * $.list(items, item => html`<li>${item.name}</li>`)
  */
 $.list = function(itemsSignal, renderFn, keyFn) {
   const container = document.createElement('div')
@@ -549,15 +506,11 @@ $.list = function(itemsSignal, renderFn, keyFn) {
 }
 
 /**
- * Creates a dangerous HTML object for raw HTML insertion
- * WARNING: This bypasses XSS protection. Only use with trusted content.
- * @param {string} html - Raw HTML string to insert
- * @returns {DocumentFragment} Fragment containing parsed HTML
+ * Creates HTML from string (bypasses XSS protection)
+ * @param {string} html
+ * @returns {DocumentFragment}
  * @example
- * html`
- *   ${$.DHTML('<style>.my-comp { color: red; }</style>')}
- *   <div class="my-comp">Styled content</div>
- * `
+ * $.DHTML('<p>Hello <strong>World</strong></p>')
  */
 $.DHTML = function(html) {
   if (typeof html !== 'string') {
@@ -576,5 +529,4 @@ $.DHTML = function(html) {
 
 export { $, html, css }
 
-// Internal export for component.js
 export { render }

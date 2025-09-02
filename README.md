@@ -47,14 +47,11 @@ import { rain, html, $, css } from 'rainwc'
 
 ```javascript
 // Component with props
-rain('user-card', {
-  name: { type: String, default: 'Anonymous' },
-  age: { type: Number, default: 0 }
-}, function(props) {
+rain('user-card', ['name', 'age'], function(props) {
   return () => html`
     <div>
-      <h3>${props().name}</h3>
-      <p>Age: ${props().age}</p>
+      <h3>${props.name() || 'Anonymous'}</h3>
+      <p>Age: ${props.age() || '0'}</p>
     </div>
   `
 })
@@ -65,15 +62,40 @@ rain('user-card', {
 
 ## Documentation
 
-- [Getting Started](docs/getting-started.md) - Installation and first component
-- [Components](docs/components.md) - Creating and using components
-- [Reactivity](docs/reactivity.md) - Signals and reactive state
-- [Templates](docs/templates.md) - HTM templates and directives
-- [API Reference](docs/api.md) - Complete API documentation
+- [API Reference](api.md) - Complete API documentation
 
-## Examples
+## Example
 
-Browse the [examples](examples/) directory for working demos of all features.
+```javascript
+// Todo app with reactive state
+rain('todo-app', function() {
+  const [todos, setTodos] = $([])
+  const [input, setInput] = $('')
+  
+  const addTodo = () => {
+    if (input().trim()) {
+      setTodos([...todos(), { id: Date.now(), text: input() }])
+      setInput('')
+    }
+  }
+  
+  return () => html`
+    <div>
+      <input 
+        .value=${input} 
+        @input=${e => setInput(e.target.value)}
+        @keypress=${e => e.key === 'Enter' && addTodo()}
+        placeholder="Add todo..." 
+      />
+      <button @click=${addTodo}>Add</button>
+      ${$.list(todos, todo => 
+        html`<div>${todo.text}</div>`, 
+        todo => todo.id
+      )}
+    </div>
+  `
+})
+```
 
 ## Acknowledgments
 

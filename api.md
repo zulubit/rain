@@ -122,7 +122,7 @@ rain('styled-component', function() {
 ## Component System
 
 ### `rain(name, factory)`
-### `rain(name, props, factory)`
+### `rain(name, propNames, factory)`
 Registers a Web Component with closed shadow DOM (default).
 
 ```javascript
@@ -132,14 +132,11 @@ rain('my-button', function() {
 })
 
 // Component with props
-rain('user-card', {
-  name: { type: String, default: 'Anonymous' },
-  age: { type: Number, default: 0 }
-}, function(props) {
+rain('user-card', ['name', 'age'], function(props) {
   return () => html`
     <div>
-      <h3>${props().name}</h3>
-      <p>Age: ${props().age}</p>
+      <h3>${props.name() || 'Anonymous'}</h3>
+      <p>Age: ${props.age() || '0'}</p>
     </div>
   `
 })
@@ -147,52 +144,23 @@ rain('user-card', {
 
 **Parameters**:
 - `name: string` - component tag name (must contain hyphen)
-- `props?: object` - prop definitions (optional)
+- `propNames?: string[]` - array of observed attribute names (optional)
 - `factory: function` - component factory function
 
 **Returns**: `boolean` - success status
 
 ### `rain.open(name, factory)`
-### `rain.open(name, props, factory)`
+### `rain.open(name, propNames, factory)`
 Registers a Web Component with open shadow DOM (allows external JavaScript access).
 
 ```javascript
-// Component with open shadow DOM
-rain.open('my-component', function() {
-  return () => html`<div>Open shadow DOM</div>`
+rain.open('my-component', ['title'], function(props) {
+  return () => html`<div>${props.title()}</div>`
 })
-
-// External JavaScript can access shadowRoot
-const element = document.querySelector('my-component')
-console.log(element.shadowRoot) // accessible
 ```
 
 **Parameters**: Same as `rain()`
 **Returns**: `boolean` - success status
-
-**When to use open shadow DOM**:
-- When external tools need to inspect the shadow tree
-- For debugging or testing purposes
-- When intentionally allowing external manipulation
-
-### Prop Types
-- `String` - text values
-- `Number` - numeric values  
-- `Boolean` - true/false (attribute presence)
-- `Object` - JSON objects
-- `Array` - JSON arrays
-- `Function` - callback functions
-
-```javascript
-{
-  text: { type: String, default: '' },
-  count: { type: Number, default: 0, validator: v => v >= 0 },
-  active: { type: Boolean, default: false },
-  data: { type: Object, default: null },
-  items: { type: Array, default: [] },
-  onClick: { type: Function, default: null }
-}
-```
 
 ## Template System
 
@@ -206,44 +174,55 @@ html`<button @click=${handler}>Click</button>`
 
 **Returns**: `Element` - DOM element
 
-### `match(signal, cases)`
-Conditional rendering based on signal value.
+### `$.if(conditionSignal, trueFn, falseFn?)`
+Simple conditional rendering based on signal value.
 
 ```javascript
-match(status, {
-  'loading': () => html`<div>Loading...</div>`,
-  'success': () => html`<div>Success!</div>`,
-  'error': () => html`<div>Error!</div>`,
-  'default': () => html`<div>Unknown status</div>`
-})
+// Basic conditional
+$.if(isLoading, 
+  () => html`<div>Loading...</div>`,
+  () => html`<div>Ready!</div>`
+)
+
+// Without else case
+$.if(showMessage, () => html`<div>Hello World!</div>`)
 ```
 
 **Parameters**:
-- `signal: () => T` - reactive signal
-- `cases: object` - value to render function mapping with optional `default` case
+- `conditionSignal: () => any` - signal function containing the condition
+- `trueFn: () => Element` - function to render when truthy
+- `falseFn?: () => Element` - optional function to render when falsy
 
-**Returns**: `Element` - container with conditional content
+**Returns**: `Element` - container element with conditionally rendered content
 
-### `list(signal, renderFn, keyFn?)`
-Renders reactive lists with optional smart reconciliation.
+### `$.list(itemsSignal, renderFn, keyFn?)`
+Renders reactive lists with optional keyed reconciliation.
 
 ```javascript
-// Simple list
-list(items, item => html`<li>${item}</li>`)
+// Simple list (re-renders all on change)
+$.list(items, item => html`<li>${item}</li>`)
 
-// Keyed list (smart reconciliation)
-list(todos, 
+// Keyed list (smart reconciliation - recommended)
+$.list(todos, 
   todo => html`<div>${todo.text}</div>`,
   todo => todo.id
 )
+
+// With index parameter
+$.list(items, (item, index) => html`<div>${index}: ${item}</div>`)
 ```
 
 **Parameters**:
-- `signal: () => Array<T>` - array signal
-- `renderFn: (item: T, index: number) => Element` - item renderer
-- `keyFn?: (item: T, index: number) => string|number` - optional key extractor
+- `itemsSignal: () => Array<T>` - signal function containing array data
+- `renderFn: (item: T, index: number) => Element` - function to render each item
+- `keyFn?: (item: T, index: number) => string|number` - optional key extraction function
 
-**Returns**: `Element` - container with list items
+**Returns**: `Element` - container element with rendered list items
+
+**Benefits of keyed lists**:
+- Efficient updates when items are reordered, added, or removed
+- Preserves component state and DOM focus
+- Fallback to full re-render with invalid/duplicate keys
 
 ### `render(element, container)`
 Renders element to container with cleanup.
@@ -266,18 +245,11 @@ Runs when component connects to DOM.
 ```javascript
 onMounted(() => {
   console.log('Component mounted!')
-  
-  const timer = setInterval(() => {
-    console.log('tick')
-  }, 1000)
-  
-  // Return cleanup function
-  return () => clearInterval(timer)
 })
 ```
 
 **Parameters**:
-- `fn: () => void | (() => void)` - mount callback, optional cleanup return
+- `fn: () => void` - mount callback
 
 ### `onUnmounted(fn)`
 Runs when component disconnects from DOM.
@@ -387,7 +359,7 @@ window.RAIN_DEBUG = true
 ## Performance
 
 ### List Reconciliation
-- Use keyed lists for dynamic data: `list(items, render, keyFn)`
+- Use keyed lists for dynamic data: `$.list(items, render, keyFn)`
 - Keys should be unique and stable
 - Avoids unnecessary DOM updates
 
@@ -401,19 +373,19 @@ window.RAIN_DEBUG = true
 - Shadow DOM provides style encapsulation
 - Slots enable content projection
 
-### `DHTML(html)`
+### `$.DHTML(html)`
 Creates a DocumentFragment from HTML string for dangerous HTML insertion.
 
 ```javascript
 // Basic usage - inject HTML from user/API data
 const userHTML = '<p>Hello <strong>World</strong></p>'
-const fragment = DHTML(userHTML)
+const fragment = $.DHTML(userHTML)
 container.appendChild(fragment)
 
 // In templates
 return () => html`
   <div>
-    ${DHTML(apiResponse.htmlContent)}
+    ${$.DHTML(apiResponse.htmlContent)}
   </div>
 `
 ```

@@ -1,21 +1,8 @@
 /**
- * @fileoverview RainJS - Reactive Web Components with HTM templates and Preact signals
+ * @fileoverview RainJS - Reactive Web Components
  * @version 0.0.9
- * @author RainJS Team
- * @license MIT
  */
 
-export {
-  $,
-  html,
-  css
-} from './core.js'
+export { $, html, css } from './core.js'
 
-export {
-  rain
-} from './component.js'
-
-export {
-  onMounted,
-  onUnmounted
-} from './component.js'
+export { rain, onMounted, onUnmounted } from './component.js'
