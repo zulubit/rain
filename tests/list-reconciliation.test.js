@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { $, html, list } from '../src/core.js'
+import { $, html } from '../src/core.js'
 
 describe('List Reconciliation - Advanced', () => {
   // Helper to create items with unique DOM markers
@@ -26,7 +26,7 @@ describe('List Reconciliation - Advanced', () => {
         { id: 2, name: 'Second' }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => createItem(item.id, item.name),
         item => item.id
@@ -46,7 +46,7 @@ describe('List Reconciliation - Advanced', () => {
         { id: 1, name: 'Valid Key' }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => createItem(item.id || 'no-id', item.name),
         item => item.id
@@ -64,7 +64,7 @@ describe('List Reconciliation - Advanced', () => {
 
       // Start with id-based keys
       let useSlugKeys = false
-      const el = list(
+      const el = $.list(
         items,
         item => createItem(item.id, item.name),
         item => useSlugKeys ? item.slug : item.id
@@ -93,7 +93,7 @@ describe('List Reconciliation - Advanced', () => {
         { id: 4, name: 'D' }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => createItem(item.id, item.name),
         item => item.id
@@ -136,7 +136,7 @@ describe('List Reconciliation - Advanced', () => {
         { id: 4, name: 'D' }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => createItem(item.id, item.name),
         item => item.id
@@ -171,7 +171,7 @@ describe('List Reconciliation - Advanced', () => {
       }))
 
       const [items, setItems] = $(initialItems)
-      const el = list(
+      const el = $.list(
         items,
         item => createItem(item.id, item.name),
         item => item.id
@@ -193,7 +193,7 @@ describe('List Reconciliation - Advanced', () => {
         { id: 3, name: 'C' }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => createItem(item.id, item.name),
         item => item.id
@@ -222,7 +222,7 @@ describe('List Reconciliation - Advanced', () => {
         { id: 2, name: 'B' }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => createItem(item.id, item.name),
         item => item.id
@@ -257,7 +257,7 @@ describe('List Reconciliation - Advanced', () => {
         { id: 2, counter: count2 }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => {
           const div = html`<div data-id=${item.id}>Count: ${item.counter}</div>`
@@ -296,7 +296,7 @@ describe('List Reconciliation - Advanced', () => {
       ])
 
       expect(() => {
-        list(
+        $.list(
           items,
           item => {
             if (item.name === 'Bad') {
@@ -312,7 +312,7 @@ describe('List Reconciliation - Advanced', () => {
     it('should handle non-array items gracefully', () => {
       const [items, setItems] = $('not an array')
       
-      const el = list(
+      const el = $.list(
         items,
         item => createItem(item.id, item.name),
         item => item.id
@@ -336,7 +336,7 @@ describe('List Reconciliation - Advanced', () => {
         { id: 5, name: 'E' }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => createItem(item.id, item.name),
         item => item.id

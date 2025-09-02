@@ -4,27 +4,9 @@
  */
 
 import { html, render, $ } from './core.js'
-import { debugLog } from './utils.js'
-
-/**
- * Logs component errors with contextual information
- * @param {Error} error - The error that occurred
- * @param {string} componentName - Name of the component
- * @param {string} phase - Lifecycle phase where error occurred
- * @private
- */
-function logError(error, componentName, phase) {
-  console.error(`Component error in ${componentName} during ${phase}:`, error)
-}
 
 /**
  * Validates rain component parameters
- * @param {string} name - Component name
- * @param {Record<string, any> | Function} propDefs - Property definitions or factory function
- * @param {Function} [factory] - Factory function
- * @returns {{name: string, propDefs: Record<string, any>, factory: Function}} Validated parameters
- * @throws {Error} When component name is invalid or missing
- * @throws {Error} When factory function is invalid or missing
  * @private
  */
 function validateRainParams(name, propNames, factory) {
@@ -44,24 +26,6 @@ function validateRainParams(name, propNames, factory) {
   }
 
   return { name, propNames: propNames || [], factory }
-}
-
-/**
- * Sets up error boundary and recovery mechanisms for component
- * @param {HTMLElement} component - Component instance
- * @param {string} name - Component name
- * @returns {{renderError: Function}} Error boundary methods
- * @private
- */
-function setupErrorBoundary(component, name) {
-  const renderError = (error) => {
-    console.error(`Component error in ${name}:`, error)
-    return html`<div style="color: red; padding: 1rem;">
-      Component "${name}" failed to render. Check console for details.
-    </div>`
-  }
-
-  return { renderError }
 }
 
 /**
@@ -116,9 +80,6 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
 
       setupLifecycleHooks(this)
       setupMemoryManagement(this)
-      const { renderError } = setupErrorBoundary(this, name)
-
-      this.renderError = renderError
 
       // Create shadow DOM in constructor
       const root = this.attachShadow({ mode: shadowMode })
@@ -139,8 +100,10 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
       try {
         template = factory.call(this, props)
       } catch (error) {
-        logError(error, name, 'factory')
-        template = () => this.renderError(error)
+        console.error(`Component error in ${name} during factory:`, error)
+        template = () => html`<div style="color: red; padding: 1rem;">
+          Component "${name}" failed to render. Check console for details.
+        </div>`
       }
 
       currentInstance = null
@@ -150,14 +113,16 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
       try {
         templateResult = template()
       } catch (error) {
-        logError(error, name, 'render')
-        templateResult = this.renderError(error)
+        console.error(`Component error in ${name} during render:`, error)
+        templateResult = html`<div style="color: red; padding: 1rem;">
+          Component "${name}" failed to render. Check console for details.
+        </div>`
       }
 
       try {
         render(templateResult, root)
       } catch (renderError) {
-        logError(renderError, name, 'render-critical')
+        console.error(`Component error in ${name} during render-critical:`, renderError)
         root.innerHTML = `<div style="padding: 1rem; background: #fee; border: 1px solid #fcc;">
           <strong style="color: #c00;">Critical Render Error: ${name}</strong>
         </div>`
@@ -185,7 +150,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         try {
           cb()
         } catch (error) {
-          logError(error, this.tagName.toLowerCase(), 'connected')
+          console.error(`Component error in ${this.tagName.toLowerCase()} during connected:`, error)
         }
       })
     }
@@ -196,7 +161,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
           try {
             cleanup()
           } catch (error) {
-            logError(error, this.tagName.toLowerCase(), 'cleanup')
+            console.error(`Component error in ${this.tagName.toLowerCase()} during cleanup:`, error)
           }
         }
       })
@@ -205,7 +170,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         try {
           cb()
         } catch (error) {
-          logError(error, this.tagName.toLowerCase(), 'unmount')
+          console.error(`Component error in ${this.tagName.toLowerCase()} during unmount:`, error)
         }
       })
     }
@@ -262,7 +227,9 @@ function rain(name, propNames, factory) {
     const { name: validatedName, propNames: validatedPropNames, factory: validatedFactory } = validateRainParams(name, propNames, factory)
 
     if (customElements.get(validatedName)) {
-      debugLog('Component', `'${validatedName}' already defined, skipping`)
+      if (typeof window !== 'undefined' && window.RAIN_DEBUG) {
+        console.log(`[Rain:Component] '${validatedName}' already defined, skipping`)
+      }
       return true
     }
 
@@ -292,7 +259,9 @@ rain.open = function(name, propNames, factory) {
     const { name: validatedName, propNames: validatedPropNames, factory: validatedFactory } = validateRainParams(name, propNames, factory)
 
     if (customElements.get(validatedName)) {
-      debugLog('Component', `'${validatedName}' already defined, skipping`)
+      if (typeof window !== 'undefined' && window.RAIN_DEBUG) {
+        console.log(`[Rain:Component] '${validatedName}' already defined, skipping`)
+      }
       return true
     }
 

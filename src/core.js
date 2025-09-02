@@ -5,9 +5,18 @@
 
 import htm from 'htm'
 import { signal, computed, effect } from '@preact/signals-core'
-import { isSignal, debugLog } from './utils.js'
 
 const SIGNAL_SYMBOL = Symbol('rain.signal')
+
+/**
+ * Check if a value is a reactive signal function
+ * @param {any} value - Value to check
+ * @returns {boolean} True if value is reactive
+ * @private
+ */
+function isReactive(value) {
+  return typeof value === 'function' && value[SIGNAL_SYMBOL]
+}
 
 /**
  * Helper function to set property or attribute on element
@@ -43,9 +52,9 @@ function processAttribute(element, key, value) {
     element.addEventListener(eventName, value)
   } else if (key.startsWith('.')) {
     const propName = key.slice(1)
-    if (isSignal(value)) {
+    if (isReactive(value)) {
       effect(() => {
-        element[propName] = value.value
+        element[propName] = value()
       })
     } else if (typeof value === 'function' && value[SIGNAL_SYMBOL]) {
       effect(() => {
@@ -54,9 +63,9 @@ function processAttribute(element, key, value) {
     } else {
       element[propName] = value
     }
-  } else if (isSignal(value)) {
+  } else if (isReactive(value)) {
     effect(() => {
-      setElementValue(element, key, value.value)
+      setElementValue(element, key, value())
     })
   } else if (typeof value === 'function' && value[SIGNAL_SYMBOL]) {
     effect(() => {
@@ -160,16 +169,6 @@ function processChild(element, child) {
 }
 
 /**
- * Check if a value is a reactive signal function
- * @param {any} value - Value to check
- * @returns {boolean} True if value is reactive
- * @private
- */
-function isReactive(value) {
-  return typeof value === 'function' && value[SIGNAL_SYMBOL]
-}
-
-/**
  * Internal HTM template function
  * @private
  */
@@ -179,7 +178,7 @@ const htmBound = htm.bind(h)
  * Generate a unique cache-busting key for component instances
  */
 let instanceCounter = 0
-const getInstanceKey = () => `__rain_instance_${++instanceCounter}`
+const getInstanceKey = () => ++instanceCounter
 
 /**
  * HTM template function for creating reactive DOM elements
@@ -190,209 +189,11 @@ const getInstanceKey = () => `__rain_instance_${++instanceCounter}`
  * @example html`<div>Hello ${name}</div>`
  */
 function html(strings, ...values) {
-  // Strip leading whitespace from first string and trailing whitespace from last string
-  const modifiedStrings = [...strings]
-  if (modifiedStrings.length > 0) {
-    modifiedStrings[0] = modifiedStrings[0].replace(/^\s+/, '')
-    modifiedStrings[modifiedStrings.length - 1] = modifiedStrings[modifiedStrings.length - 1].replace(/\s+$/, '')
-  }
-
   // Add a unique cache-buster to prevent HTM from reusing DOM elements between component instances
+  const modifiedStrings = [...strings]
   modifiedStrings[modifiedStrings.length - 1] += `<!-- ${getInstanceKey()} -->`
 
   return htmBound(modifiedStrings, ...values)
-}
-
-/**
- * Renders conditional content based on signal value with smart matching
- * @param {() => any} valueSignal - Signal function containing the value to match against
- * @param {Record<string|number, () => Element>} cases - Object mapping values to render functions (supports 'default' key)
- * @returns {Element} Container element with conditionally rendered content
- * @throws {Error} When valueSignal is not a signal function
- * @throws {Error} When cases is not an object
- * @example
- * // Basic usage
- * match(status, {
- *   'loading': () => html`<div>Loading...</div>`,
- *   'success': () => html`<div>Success!</div>`,
- *   'error': () => html`<div>Error occurred</div>`
- * })
- *
- * // With default case
- * match(status, {
- *   'active': () => html`<span class="active">●</span>`,
- *   'inactive': () => html`<span class="inactive">○</span>`,
- *   'default': () => html`<span class="unknown">?</span>`
- * })
- */
-function match(valueSignal, cases) {
-  if (typeof valueSignal !== 'function' || !valueSignal[SIGNAL_SYMBOL]) {
-    throw new Error('match() expects a signal as first argument')
-  }
-
-  if (!cases || typeof cases !== 'object') {
-    throw new Error('match() expects an object of cases as second argument')
-  }
-
-  const container = document.createElement('div')
-  container.style.display = 'contents'
-
-  let currentElement = null
-
-  const cleanup = effect(() => {
-    const value = valueSignal()
-    const key = String(value)
-
-    // Remove current element if exists
-    if (currentElement && currentElement.parentNode === container) {
-      currentElement.remove()
-    }
-
-    let renderFn = cases[key]
-    if (!renderFn && cases.default) {
-      renderFn = cases.default
-    }
-
-    if (renderFn && typeof renderFn === 'function') {
-      try {
-        const element = renderFn()
-        if (!element || !(element instanceof Node)) {
-          throw new Error(`match() render function must return a DOM Node, got ${typeof element}`)
-        }
-        container.appendChild(element)
-        currentElement = element
-      } catch (error) {
-        console.error('match() render function failed:', error)
-        const errorElement = document.createTextNode('Match render error')
-        container.appendChild(errorElement)
-        currentElement = errorElement
-      }
-    } else {
-      // No matching case and no fallback
-      currentElement = null
-    }
-  })
-
-  container._listCleanup = cleanup
-  return container
-}
-
-/**
- * Renders reactive lists with smart reconciliation
- * @param {() => any[]} itemsSignal - Signal function containing array data
- * @param {(item: any, index: number) => Element} renderFn - Function to render each item
- * @param {(item: any, index: number) => string | number} [keyFn] - Optional key extraction function
- * @returns {Element} Container element with rendered list items
- * @throws {Error} When renderFn doesn't return a DOM Node
- * @example
- * // With keyed reconciliation (recommended)
- * list(items, item => html`<li>${item.name}</li>`, item => item.id)
- *
- * // Simple re-render (no keys)
- * list(items, item => html`<li>${item.name}</li>`)
- */
-function list(itemsSignal, renderFn, keyFn) {
-  const container = document.createElement('div')
-  container.style.display = 'contents'
-  container._listCleanup = true
-
-  let cleanup = null
-
-  if (keyFn) {
-    const nodeMap = new Map()
-
-    cleanup = effect(() => {
-      const items = itemsSignal() // Always expect $() tuple function
-      if (!Array.isArray(items)) return
-
-      if (items.length === 0) {
-        for (const [, node] of nodeMap) {
-          if (node.parentNode === container) {
-            node.remove()
-          }
-        }
-        nodeMap.clear()
-        return
-      }
-
-      const keys = items.map((item, index) => keyFn(item, index))
-      const validKeys = keys.every(key => key != null)
-      const uniqueKeys = new Set(keys).size === keys.length
-
-      if (!validKeys || !uniqueKeys) {
-        debugLog('List', 'Invalid keys, falling back to full re-render')
-        Array.from(container.children).forEach(child => child.remove())
-        nodeMap.clear()
-        items.forEach((item, index) => {
-          const node = renderFn(item, index)
-          if (!node || !(node instanceof Node)) {
-            throw new Error(`renderFn must return a DOM Node, got ${typeof node}`)
-          }
-          container.appendChild(node)
-        })
-        return
-      }
-
-      const usedNodes = new Set()
-
-      const desiredNodes = []
-      items.forEach((item, index) => {
-        const key = keys[index]
-        let node = nodeMap.get(key)
-
-        usedNodes.add(key)
-
-        if (!node) {
-          node = renderFn(item, index)
-          if (!node || !(node instanceof Node)) {
-            throw new Error(`renderFn must return a DOM Node, got ${typeof node}`)
-          }
-          nodeMap.set(key, node)
-        }
-
-        desiredNodes.push(node)
-      })
-
-      const currentNodes = Array.from(container.children)
-
-      currentNodes.forEach(node => {
-        if (node.parentNode === container) {
-          container.removeChild(node)
-        }
-      })
-
-      desiredNodes.forEach(node => {
-        container.appendChild(node)
-      })
-
-      for (const [key, node] of nodeMap) {
-        if (!usedNodes.has(key)) {
-          if (node.parentNode === container) {
-            node.remove()
-          }
-          nodeMap.delete(key)
-        }
-      }
-    })
-  } else {
-    cleanup = effect(() => {
-      const items = itemsSignal() // Always expect $() tuple function
-      if (!Array.isArray(items)) return
-
-      Array.from(container.children).forEach(child => child.remove())
-
-      items.forEach((item, index) => {
-        const node = renderFn(item, index)
-        if (!node || !(node instanceof Node)) {
-          throw new Error(`renderFn must return a DOM Node, got ${typeof node}`)
-        }
-        container.appendChild(node)
-      })
-    })
-  }
-
-  container._listCleanup = cleanup
-  return container
 }
 
 /**
@@ -565,7 +366,7 @@ $.emit = function(eventName, detail, target) {
  *   }
  * `
  */
-export function css(strings, ...values) {
+function css(strings, ...values) {
   if (!Array.isArray(strings)) {
     throw new Error('css must be used as a template literal')
   }
@@ -587,19 +388,180 @@ export function css(strings, ...values) {
 }
 
 /**
+ * Simple conditional rendering
+ * @param {() => any} conditionSignal - Signal function containing the condition
+ * @param {() => Element} trueFn - Function to render when truthy
+ * @param {() => Element} [falseFn] - Optional function to render when falsy
+ * @returns {Element} Container element with conditionally rendered content
+ * @example
+ * $.if(isLoading, () => html`<div>Loading...</div>`, () => html`<div>Ready!</div>`)
+ */
+$.if = function(conditionSignal, trueFn, falseFn) {
+  if (typeof conditionSignal !== 'function' || !conditionSignal[SIGNAL_SYMBOL]) {
+    throw new Error('$.if() expects a signal as first argument')
+  }
+
+  const container = document.createElement('div')
+  container.style.display = 'contents'
+
+  let currentElement = null
+
+  const cleanup = effect(() => {
+    const condition = conditionSignal()
+
+    // Remove current element if exists
+    if (currentElement && currentElement.parentNode === container) {
+      currentElement.remove()
+      currentElement = null
+    }
+
+    const renderFn = condition ? trueFn : falseFn
+    if (renderFn && typeof renderFn === 'function') {
+      const element = renderFn()
+      if (element && element instanceof Node) {
+        container.appendChild(element)
+        currentElement = element
+      }
+    }
+  })
+
+  container._listCleanup = cleanup
+  return container
+}
+
+/**
+ * Renders reactive lists with optional keyed reconciliation
+ * @param {() => any[]} itemsSignal - Signal function containing array data
+ * @param {(item: any, index: number) => Element} renderFn - Function to render each item
+ * @param {(item: any, index: number) => string | number} [keyFn] - Optional key extraction function
+ * @returns {Element} Container element with rendered list items
+ * @example
+ * // With keyed reconciliation (recommended)
+ * $.list(items, item => html`<li>${item.name}</li>`, item => item.id)
+ *
+ * // Simple re-render (no keys)
+ * $.list(items, item => html`<li>${item.name}</li>`)
+ */
+$.list = function(itemsSignal, renderFn, keyFn) {
+  const container = document.createElement('div')
+  container.style.display = 'contents'
+  container._listCleanup = true
+
+  let cleanup = null
+
+  if (keyFn) {
+    const nodeMap = new Map()
+
+    cleanup = effect(() => {
+      const items = itemsSignal()
+      if (!Array.isArray(items)) return
+
+      if (items.length === 0) {
+        for (const [, node] of nodeMap) {
+          if (node.parentNode === container) {
+            node.remove()
+          }
+        }
+        nodeMap.clear()
+        return
+      }
+
+      const keys = items.map((item, index) => keyFn(item, index))
+      const validKeys = keys.every(key => key != null)
+      const uniqueKeys = new Set(keys).size === keys.length
+
+      if (!validKeys || !uniqueKeys) {
+        if (typeof window !== 'undefined' && window.RAIN_DEBUG) {
+          console.log('[Rain:List] Invalid keys, falling back to full re-render')
+        }
+        Array.from(container.children).forEach(child => child.remove())
+        nodeMap.clear()
+        items.forEach((item, index) => {
+          const node = renderFn(item, index)
+          if (!node || !(node instanceof Node)) {
+            throw new Error(`renderFn must return a DOM Node, got ${typeof node}`)
+          }
+          container.appendChild(node)
+        })
+        return
+      }
+
+      const usedNodes = new Set()
+
+      const desiredNodes = []
+      items.forEach((item, index) => {
+        const key = keys[index]
+        let node = nodeMap.get(key)
+
+        usedNodes.add(key)
+
+        if (!node) {
+          node = renderFn(item, index)
+          if (!node || !(node instanceof Node)) {
+            throw new Error(`renderFn must return a DOM Node, got ${typeof node}`)
+          }
+          nodeMap.set(key, node)
+        }
+
+        desiredNodes.push(node)
+      })
+
+      const currentNodes = Array.from(container.children)
+
+      currentNodes.forEach(node => {
+        if (node.parentNode === container) {
+          container.removeChild(node)
+        }
+      })
+
+      desiredNodes.forEach(node => {
+        container.appendChild(node)
+      })
+
+      for (const [key, node] of nodeMap) {
+        if (!usedNodes.has(key)) {
+          if (node.parentNode === container) {
+            node.remove()
+          }
+          nodeMap.delete(key)
+        }
+      }
+    })
+  } else {
+    cleanup = effect(() => {
+      const items = itemsSignal()
+      if (!Array.isArray(items)) return
+
+      Array.from(container.children).forEach(child => child.remove())
+
+      items.forEach((item, index) => {
+        const node = renderFn(item, index)
+        if (!node || !(node instanceof Node)) {
+          throw new Error(`renderFn must return a DOM Node, got ${typeof node}`)
+        }
+        container.appendChild(node)
+      })
+    })
+  }
+
+  container._listCleanup = cleanup
+  return container
+}
+
+/**
  * Creates a dangerous HTML object for raw HTML insertion
  * WARNING: This bypasses XSS protection. Only use with trusted content.
  * @param {string} html - Raw HTML string to insert
  * @returns {DocumentFragment} Fragment containing parsed HTML
  * @example
  * html`
- *   ${DHTML('<style>.my-comp { color: red; }</style>')}
+ *   ${$.DHTML('<style>.my-comp { color: red; }</style>')}
  *   <div class="my-comp">Styled content</div>
  * `
  */
-function DHTML(html) {
+$.DHTML = function(html) {
   if (typeof html !== 'string') {
-    throw new Error('DHTML expects a string')
+    throw new Error('$.DHTML expects a string')
   }
   const container = document.createElement('div')
   container.innerHTML = html
@@ -612,4 +574,7 @@ function DHTML(html) {
   return fragment
 }
 
-export { $, html, render, list, match, DHTML }
+export { $, html, css }
+
+// Internal export for component.js
+export { render }

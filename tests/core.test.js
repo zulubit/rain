@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { $, html, render, list, match, css, DHTML } from '../src/core.js'
+import * as core from '../src/core.js'
+
+const { $, html, css } = core
+// Access internal functions for testing
+const render = core.render || core.default?.render
 
 describe('core.js', () => {
   describe('$ (signal creation)', () => {
@@ -213,60 +217,50 @@ describe('core.js', () => {
     })
   })
 
-  describe('match', () => {
-    it('should render matching case', () => {
-      const [status, setStatus] = $('loading')
-      const el = match(status, {
-        'loading': () => html`<div>Loading...</div>`,
-        'success': () => html`<div>Success!</div>`,
-        'error': () => html`<div>Error</div>`
-      })
+  describe('$.if', () => {
+    it('should render true case when condition is truthy', () => {
+      const [isLoading, setLoading] = $(true)
+      const el = $.if(isLoading, 
+        () => html`<div>Loading...</div>`,
+        () => html`<div>Ready</div>`
+      )
       
       expect(el.textContent).toBe('Loading...')
+    })
+
+    it('should render false case when condition is falsy', () => {
+      const [isLoading, setLoading] = $(false)
+      const el = $.if(isLoading, 
+        () => html`<div>Loading...</div>`,
+        () => html`<div>Ready</div>`
+      )
+      
+      expect(el.textContent).toBe('Ready')
     })
 
     it('should update when signal changes', () => {
-      const [status, setStatus] = $('loading')
-      const el = match(status, {
-        'loading': () => html`<div>Loading...</div>`,
-        'success': () => html`<div>Success!</div>`
-      })
+      const [isLoading, setLoading] = $(true)
+      const el = $.if(isLoading, 
+        () => html`<div>Loading...</div>`,
+        () => html`<div>Ready</div>`
+      )
       
       expect(el.textContent).toBe('Loading...')
-      setStatus('success')
-      expect(el.textContent).toBe('Success!')
+      setLoading(false)
+      expect(el.textContent).toBe('Ready')
     })
 
-    it('should use default case for unmatched values', () => {
-      const [value, setValue] = $('unknown')
-      const el = match(value, {
-        'known': () => html`<div>Known</div>`,
-        'default': () => html`<div>Fallback</div>`
-      })
+    it('should render nothing when false case is omitted and condition is falsy', () => {
+      const [condition, setCondition] = $(false)
+      const el = $.if(condition, () => html`<div>True</div>`)
       
-      expect(el.textContent).toBe('Fallback')
-    })
-
-    it('should handle numeric keys', () => {
-      const [num, setNum] = $(1)
-      const el = match(num, {
-        1: () => html`<div>One</div>`,
-        2: () => html`<div>Two</div>`
-      })
-      
-      expect(el.textContent).toBe('One')
-      setNum(2)
-      expect(el.textContent).toBe('Two')
+      expect(el.textContent).toBe('')
+      setCondition(true)
+      expect(el.textContent).toBe('True')
     })
 
     it('should throw for non-signal first argument', () => {
-      expect(() => match('not a signal', {})).toThrow('match() expects a signal as first argument')
-    })
-
-    it('should throw for invalid cases object', () => {
-      const [value] = $('test')
-      expect(() => match(value, null)).toThrow('match() expects an object of cases')
-      expect(() => match(value, 'not an object')).toThrow('match() expects an object of cases')
+      expect(() => $.if('not a signal', () => html`<div>test</div>`)).toThrow('$.if() expects a signal as first argument')
     })
   })
 
@@ -311,10 +305,10 @@ describe('core.js', () => {
     })
   })
 
-  describe('list', () => {
+  describe('$.list', () => {
     it('should render simple list without keys', () => {
       const [items, setItems] = $(['a', 'b', 'c'])
-      const el = list(items, item => html`<div>${item}</div>`)
+      const el = $.list(items, item => html`<div>${item}</div>`)
       
       expect(el.children).toHaveLength(3)
       expect(el.children[0].textContent).toBe('a')
@@ -324,7 +318,7 @@ describe('core.js', () => {
 
     it('should update list when signal changes', () => {
       const [items, setItems] = $([1, 2])
-      const el = list(items, item => html`<span>${item}</span>`)
+      const el = $.list(items, item => html`<span>${item}</span>`)
       
       expect(el.children).toHaveLength(2)
       setItems([1, 2, 3, 4])
@@ -334,7 +328,7 @@ describe('core.js', () => {
 
     it('should handle empty list', () => {
       const [items, setItems] = $([])
-      const el = list(items, item => html`<div>${item}</div>`)
+      const el = $.list(items, item => html`<div>${item}</div>`)
       
       expect(el.children).toHaveLength(0)
       
@@ -349,7 +343,7 @@ describe('core.js', () => {
         { id: 2, name: 'Two' }
       ])
       
-      const el = list(
+      const el = $.list(
         items,
         item => {
           const div = html`<div>${item.name}</div>`
@@ -377,13 +371,13 @@ describe('core.js', () => {
     it('should throw for invalid render function return', () => {
       const [items, setItems] = $([1])
       expect(() => {
-        list(items, item => 'not a node')
+        $.list(items, item => 'not a node')
       }).toThrow('renderFn must return a DOM Node')
     })
 
     it('should pass index to render function', () => {
       const [items] = $(['a', 'b', 'c'])
-      const el = list(items, (item, index) => html`<div>${index}: ${item}</div>`)
+      const el = $.list(items, (item, index) => html`<div>${index}: ${item}</div>`)
       
       expect(el.children[0].textContent).toBe('0: a')
       expect(el.children[1].textContent).toBe('1: b')
@@ -391,9 +385,9 @@ describe('core.js', () => {
     })
   })
 
-  describe('DHTML', () => {
+  describe('$.DHTML', () => {
     it('should create document fragment from HTML string', () => {
-      const fragment = DHTML('<p>Hello</p><span>World</span>')
+      const fragment = $.DHTML('<p>Hello</p><span>World</span>')
       expect(fragment instanceof DocumentFragment).toBe(true)
       
       const div = document.createElement('div')
@@ -402,19 +396,19 @@ describe('core.js', () => {
     })
 
     it('should handle empty HTML string', () => {
-      const fragment = DHTML('')
+      const fragment = $.DHTML('')
       expect(fragment instanceof DocumentFragment).toBe(true)
       expect(fragment.childNodes.length).toBe(0)
     })
 
     it('should throw for non-string input', () => {
-      expect(() => DHTML(123)).toThrow('DHTML expects a string')
-      expect(() => DHTML(null)).toThrow('DHTML expects a string')
-      expect(() => DHTML(undefined)).toThrow('DHTML expects a string')
+      expect(() => $.DHTML(123)).toThrow('$.DHTML expects a string')
+      expect(() => $.DHTML(null)).toThrow('$.DHTML expects a string')
+      expect(() => $.DHTML(undefined)).toThrow('$.DHTML expects a string')
     })
 
     it('should work with html template', () => {
-      const element = html`<div>${DHTML('<strong>Bold text</strong>')}</div>`
+      const element = html`<div>${$.DHTML('<strong>Bold text</strong>')}</div>`
       expect(element.innerHTML).toBe('<strong>Bold text</strong>')
     })
   })

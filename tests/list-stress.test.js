@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { $, html, list } from '../src/core.js'
+import { $, html } from '../src/core.js'
 
 describe('List Reconciliation - Stress Tests', () => {
   function createTrackedItem(id, name) {
@@ -14,7 +14,7 @@ describe('List Reconciliation - Stress Tests', () => {
         { id: 1, name: 'A' }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => createTrackedItem(item.id, item.name),
         item => item.id
@@ -37,7 +37,7 @@ describe('List Reconciliation - Stress Tests', () => {
         { id: 3, name: 'C' }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => createTrackedItem(item.id, item.name),
         item => item.id
@@ -67,7 +67,7 @@ describe('List Reconciliation - Stress Tests', () => {
     it('should handle alternating add/remove pattern', () => {
       const [items, setItems] = $([])
 
-      const el = list(
+      const el = $.list(
         items,
         item => createTrackedItem(item.id, item.name),
         item => item.id
@@ -102,7 +102,7 @@ describe('List Reconciliation - Stress Tests', () => {
         { id: 2, counter: counter2, visible: visible2 }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => {
           const div = document.createElement('div')
@@ -150,7 +150,7 @@ describe('List Reconciliation - Stress Tests', () => {
       }))
 
       const [items, setItems] = $(originalItems)
-      const el = list(
+      const el = $.list(
         items,
         item => createTrackedItem(item.id, item.name),
         item => item.id
@@ -183,7 +183,7 @@ describe('List Reconciliation - Stress Tests', () => {
       }))
 
       const [items, setItems] = $(originalItems)
-      const el = list(
+      const el = $.list(
         items,
         item => createTrackedItem(item.id, item.name),
         item => item.id
@@ -210,7 +210,7 @@ describe('List Reconciliation - Stress Tests', () => {
         { key: symbolKey2, name: 'Symbol 2' }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => html`<div>${item.name}</div>`,
         item => item.key
@@ -239,7 +239,7 @@ describe('List Reconciliation - Stress Tests', () => {
         { id: 'item/with/slashes', name: 'Slashes' }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => html`<div data-id="${item.id}">${item.name}</div>`,
         item => item.id
@@ -263,7 +263,7 @@ describe('List Reconciliation - Stress Tests', () => {
         { id: 3, name: 'C' }
       ])
 
-      const el = list(
+      const el = $.list(
         items,
         item => createTrackedItem(item.id, item.name),
         item => item.id

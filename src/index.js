@@ -8,11 +8,7 @@
 export {
   $,
   html,
-  render,
-  list,
-  match,
-  css,
-  DHTML
+  css
 } from './core.js'
 
 export {
