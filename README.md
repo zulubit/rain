@@ -101,6 +101,7 @@ If you prefer to configure JSX manually:
 ## Documentation
 
 - [API Reference](api.md) - Complete API documentation
+- [Rainbow](rainbow.md) - Server-driven paradigm for dynamic apps
 
 ## Examples
 

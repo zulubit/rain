@@ -1,6 +1,6 @@
 {
   "name": "rainwc",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Fine-grained reactive Web Components framework with JSX",
   "type": "module",
   "main": "dist/index.js",

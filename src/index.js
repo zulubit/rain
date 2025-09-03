@@ -10,3 +10,6 @@ export { jsx, jsx as h, Fragment } from './jsx.js'
 
 // Component system exports
 export { rain, onMounted, onUnmounted } from './component.js'
+
+// Rainbow server-driven paradigm exports
+export { $$ } from './rainbow.js'
