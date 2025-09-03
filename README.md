@@ -71,6 +71,19 @@ rain('my-component', function() {
 })
 ```
 
+### Preventing Flash of Unstyled Content (FOUC)
+
+Add this CSS to your HTML `<head>` to prevent components from showing before they're defined:
+
+```css
+<style>
+  :not(:defined) { visibility: hidden; }
+  :not(:defined) * { visibility: hidden; }
+</style>
+```
+
+This is especially useful for slotted content, which always appears before components mount and can cause visual flashes.
+
 ### Manual Configuration
 
 If you prefer to configure JSX manually:
