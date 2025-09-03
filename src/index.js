@@ -7,8 +7,11 @@ if (typeof document !== 'undefined' && !document.querySelector('#rainwc-fouc-sty
   const style = document.createElement('style')
   style.id = 'rainwc-fouc-styles'
   style.textContent = `
-    /* RainWC FOUC Prevention - hides undefined custom elements */
+    /* RainWC FOUC Prevention - hides undefined custom elements and their content */
     :not(:defined) {
+      visibility: hidden;
+    }
+    :not(:defined) * {
       visibility: hidden;
     }
   `
