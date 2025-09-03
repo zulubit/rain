@@ -303,16 +303,27 @@ onUnmounted(() => {
 <div onKeyPress={e => e.key === 'Enter' && submit()} />
 ```
 
-### Reactive Properties
+### Property Binding with $ Prefix
+
+**Rule**: Use `$` prefix to set DOM properties instead of HTML attributes.
+
 ```jsx
-<input value={value} disabled={disabled} />
-<select value={selected}>{options}</select>
+// Properties ($ prefix) - Sets element.value, element.checked, etc.
+<input $value={text} onInput={e => setText(e.target.value)} />
+<input type="checkbox" $checked={isChecked} />
+<select $value={selectedOption}>{options}</select>
+
+// Without $ - Sets as HTML attributes (gets stringified)
+<div data-value={myObject} />  // Becomes data-value="[object Object]"
+<input value="static" />       // Sets attribute, not property
 ```
+
+**When to use $**: Primarily for form inputs that need their DOM properties set directly.
 
 ### Attributes
 ```jsx
 <div className={styles} id={elementId} />
-<input type="text" placeholder={hint} />
+<input type="text" placeholder={hint} disabled={isDisabled} />
 ```
 
 ### Conditional Attributes
@@ -321,10 +332,17 @@ onUnmounted(() => {
 // disabled=true sets attribute, disabled=false removes it
 ```
 
-### Style Objects
+### Styles
 ```jsx
-<div style={{ color: 'red', fontSize: '16px' }}>Styled</div>
-<div style={dynamicStyles} />
+// Style strings
+<div style="color: red; font-size: 16px;">Styled</div>
+
+// Reactive style strings
+<div style={styleSignal} />
+
+// Dynamic styles with template literals
+const dynamicStyle = $.computed(() => `color: ${color()}; padding: ${padding()}px`)
+<div style={dynamicStyle} />
 ```
 
 ### Fragments
@@ -341,7 +359,7 @@ return () => (
 
 **Benefits**:
 - Groups elements logically without affecting layout
-- Uses `display: contents` CSS property
+- Uses native DocumentFragment for minimal overhead
 - Useful for conditional rendering of multiple elements
 
 ## Component Communication
@@ -387,14 +405,25 @@ return () => (
 
 ## Build Configuration
 
-### Vite Plugin (Recommended)
+### Universal Plugin (Works with both esbuild and Vite)
 ```js
-// vite.config.js
-import { rainwc } from 'rainwc/plugin'
+// With esbuild
+import rainwc from 'rainwc/plugin'
+import { build } from 'esbuild'
 
-export default {
+build({
+  entryPoints: ['src/app.jsx'],
+  bundle: true,
   plugins: [rainwc()]
-}
+})
+
+// With Vite
+import rainwc from 'rainwc/plugin'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  plugins: [rainwc()]
+})
 ```
 
 ### Manual Configuration
@@ -403,7 +432,8 @@ export default {
 {
   jsx: 'transform',
   jsxFactory: 'jsx',
-  jsxFragment: 'Fragment'
+  jsxFragment: 'Fragment',
+  jsxInject: `import { jsx, Fragment } from 'rainwc'`
 }
 
 // For Babel

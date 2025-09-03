@@ -12,18 +12,14 @@
       "import": "./dist/index.js"
     },
     "./plugin": {
-      "types": "./vite-plugin-rainwc.d.ts",
-      "import": "./vite-plugin-rainwc.js"
-    },
-    "./esbuild-plugin": {
-      "import": "./esbuild-plugin-rainwc.js"
+      "types": "./plugin.d.ts",
+      "import": "./plugin.js"
     }
   },
   "files": [
     "dist/",
-    "vite-plugin-rainwc.js",
-    "vite-plugin-rainwc.d.ts",
-    "esbuild-plugin-rainwc.js",
+    "plugin.js",
+    "plugin.d.ts",
     "README.md"
   ],
   "scripts": {

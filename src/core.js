@@ -7,8 +7,9 @@ import { signal, computed, effect } from '@preact/signals-core'
 const SIGNAL_SYMBOL = Symbol.for('rain.signal')
 
 /**
- * @param {any} value
- * @returns {boolean}
+ * Checks if a value is a reactive signal created by this framework
+ * @param {any} value - Value to check
+ * @returns {boolean} True if value is a reactive signal
  * @private
  */
 function isReactive(value) {
@@ -119,11 +120,11 @@ $.emit = function(eventName, detail, target) {
 }
 
 /**
- * Conditional rendering
- * @param {() => any} conditionSignal
- * @param {() => Element} trueFn
- * @param {() => Element} [falseFn]
- * @returns {Element}
+ * Conditional rendering based on signal value
+ * @param {() => any} conditionSignal - Signal function containing the condition
+ * @param {() => Element} trueFn - Function to render when truthy
+ * @param {() => Element} [falseFn] - Optional function to render when falsy
+ * @returns {DocumentFragment} Invisible document fragment that manages conditional content
  * @example
  * $.if(isLoading, () => <div>Loading...</div>)
  */
@@ -132,15 +133,15 @@ $.if = function(conditionSignal, trueFn, falseFn) {
     throw new Error('$.if() expects a signal as first argument')
   }
 
-  const container = document.createElement('div')
-  container.style.display = 'contents'
-
+  // Use DocumentFragment - truly invisible and gets dissolved when appended
+  const fragment = document.createDocumentFragment()
   let currentElement = null
 
   const cleanup = effect(() => {
     const condition = conditionSignal()
 
-    if (currentElement && currentElement.parentNode === container) {
+    // Remove current element if it exists
+    if (currentElement && currentElement.parentNode) {
       currentElement.remove()
       currentElement = null
     }
@@ -149,14 +150,14 @@ $.if = function(conditionSignal, trueFn, falseFn) {
     if (renderFn && typeof renderFn === 'function') {
       const element = renderFn()
       if (element && element instanceof Node) {
-        container.appendChild(element)
+        fragment.appendChild(element)
         currentElement = element
       }
     }
   })
 
-  container._listCleanup = cleanup
-  return container
+  fragment._listCleanup = cleanup
+  return fragment
 }
 
 /**
@@ -275,9 +276,10 @@ $.list = function(itemsSignal, renderFn, keyFn) {
 }
 
 /**
- * Creates HTML from string (bypasses XSS protection)
- * @param {string} html
- * @returns {DocumentFragment}
+ * Creates HTML from string - SECURITY WARNING: bypasses XSS protection
+ * Only use with trusted content as this directly sets innerHTML
+ * @param {string} html - HTML string to parse
+ * @returns {DocumentFragment} Document fragment containing parsed HTML nodes
  * @example
  * $.DHTML('<p>Hello <strong>World</strong></p>')
  */
@@ -297,7 +299,8 @@ $.DHTML = function(html) {
 }
 
 /**
- * @param {Element} container
+ * Removes all child elements from a container, respecting list cleanup markers
+ * @param {Element} container - Container element to clean up
  * @private
  */
 function cleanupContainer(container) {
@@ -309,10 +312,10 @@ function cleanupContainer(container) {
 }
 
 /**
- * Renders elements to a container with cleanup
- * @param {Element | (() => Element)} elementOrFn
- * @param {Element} container
- * @returns {{dispose: () => void}}
+ * Renders an element or element factory function to a container with automatic cleanup
+ * @param {Element | (() => Element)} elementOrFn - Element or function that returns an element
+ * @param {Element} container - Target DOM container to render into
+ * @returns {{dispose: () => void}} Object with dispose method for cleanup
  */
 function render(elementOrFn, container) {
   if (!container || !container.appendChild) {

@@ -22,48 +22,24 @@ rain('my-counter', function() {
 - **Web Components** with reactive templates
 - **Tiny size** - 16KB minified ESM bundle
 - **TypeScript friendly** with full declarations
-- **Minimal config** with Vite plugin
+- **Universal plugin** for both esbuild and Vite
 
 ## Installation
-
-### NPM
 
 ```bash
 npm install rainwc
 ```
 
-### Vite Setup (Recommended)
+## Quick Start
+
+### Using the Plugin (Works with both esbuild and Vite)
+
+RainWC provides a universal plugin that automatically configures JSX for both esbuild and Vite:
 
 ```js
-// vite.config.js
-import { defineConfig } from 'vite'
-import { rainwc } from 'rainwc/plugin'
-
-export default defineConfig({
-  plugins: [rainwc()]
-})
-```
-
-```jsx
-// MyComponent.jsx
-import { rain, $ } from 'rainwc'
-
-function MyComponent() {
-  const [count, setCount] = $(0)
-  return () => <button onClick={() => setCount(count() + 1)}>Count: {count}</button>
-}
-
-rain('my-component', MyComponent)
-```
-
-### esbuild Setup
-
-For esbuild users:
-
-```js
-// build.js
+// esbuild.config.js
 import { build } from 'esbuild'
-import { rainwc } from 'rainwc/esbuild-plugin'
+import rainwc from 'rainwc/plugin'
 
 await build({
   entryPoints: ['src/app.jsx'],
@@ -73,11 +49,34 @@ await build({
 })
 ```
 
-### Manual Build Configuration
+```js
+// vite.config.js
+import { defineConfig } from 'vite'
+import rainwc from 'rainwc/plugin'
 
-If not using plugins, configure your build tool:
+export default defineConfig({
+  plugins: [rainwc()]
+})
+```
+
+Then write your components:
+
+```jsx
+// MyComponent.jsx
+import { rain, $ } from 'rainwc'
+
+rain('my-component', function() {
+  const [count, setCount] = $(0)
+  return () => <button onClick={() => setCount(count() + 1)}>Count: {count}</button>
+})
+```
+
+### Manual Configuration
+
+If you prefer to configure JSX manually:
 
 ```js
+// esbuild or vite config
 {
   jsx: 'transform',
   jsxFactory: 'jsx',
@@ -86,34 +85,11 @@ If not using plugins, configure your build tool:
 }
 ```
 
-Then import jsx:
-
-```jsx
-import { rain, jsx, $ } from 'rainwc'
-```
-
-## Quick Start
-
-```jsx
-// Component with props
-rain('user-card', ['name', 'age'], function(props) {
-  return () => (
-    <div>
-      <h3>{props.name() || 'Anonymous'}</h3>
-      <p>Age: {props.age() || '0'}</p>
-    </div>
-  )
-})
-
-// Use it in HTML
-// <user-card name="Alice" age="25"></user-card>
-```
-
 ## Documentation
 
 - [API Reference](api.md) - Complete API documentation
 
-## Example
+## Examples
 
 ```jsx
 // Todo app with reactive state
@@ -131,7 +107,7 @@ rain('todo-app', function() {
   return () => (
     <div>
       <input 
-        value={input} 
+        $value={input} 
         onInput={e => setInput(e.target.value)}
         onKeyPress={e => e.key === 'Enter' && addTodo()}
         placeholder="Add todo..." 

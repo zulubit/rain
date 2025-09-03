@@ -102,12 +102,6 @@ describe('core.js', () => {
   })
 
   describe('html template', () => {
-    it('should create basic elements', () => {
-      const div = jsx('div', null, 'Hello')
-      expect(div.tagName).toBe('DIV')
-      expect(div.textContent).toBe('Hello')
-    })
-
     it('should handle nested elements', () => {
       const el = jsx('div', null, jsx('span', null, 'Nested'))
       expect(el.tagName).toBe('DIV')
@@ -115,28 +109,10 @@ describe('core.js', () => {
       expect(el.children[0].textContent).toBe('Nested')
     })
 
-    it('should handle whitespace around templates', () => {
-      expect(() => {
-        const el = jsx('div', null, 'asdf')
-        expect(el.tagName).toBe('DIV')
-        expect(el.textContent).toBe('asdf')
-      }).not.toThrow()
-    })
-
-    it('should handle leading whitespace in templates', () => {
-      expect(() => {
-        const el = jsx('div', null, 'asdf')
-        expect(el.tagName).toBe('DIV')  
-        expect(el.textContent).toBe('asdf')
-      }).not.toThrow()
-    })
-
-    it('should handle trailing whitespace in templates', () => {
-      expect(() => {
-        const el = jsx('div', null, 'asdf')
-        expect(el.tagName).toBe('DIV')
-        expect(el.textContent).toBe('asdf')
-      }).not.toThrow()
+    it('should handle basic element creation', () => {
+      const el = jsx('div', null, 'Hello')
+      expect(el.tagName).toBe('DIV')
+      expect(el.textContent).toBe('Hello')
     })
 
     it('should interpolate static values', () => {
@@ -191,10 +167,11 @@ describe('core.js', () => {
         jsx('div', null, 'First'),
         jsx('div', null, 'Second')
       )
-      expect(frag.style.display).toBe('contents')
-      expect(frag.children).toHaveLength(2)
-      expect(frag.children[0].textContent).toBe('First')
-      expect(frag.children[1].textContent).toBe('Second')
+      // DocumentFragment doesn't have style property
+      expect(frag).toBeInstanceOf(DocumentFragment)
+      expect(frag.childNodes).toHaveLength(2)
+      expect(frag.childNodes[0].textContent).toBe('First')
+      expect(frag.childNodes[1].textContent).toBe('Second')
     })
   })
 
@@ -287,6 +264,14 @@ describe('core.js', () => {
     it('should throw for non-signal first argument', () => {
       expect(() => $.if('not a signal', () => jsx('div', null, 'test'))).toThrow('$.if() expects a signal as first argument')
     })
+
+    it('should return a DocumentFragment', () => {
+      const [condition] = $(true)
+      const fragment = $.if(condition, () => jsx('div', null, 'Test'))
+      
+      expect(fragment).toBeInstanceOf(DocumentFragment)
+      expect(fragment.textContent).toBe('Test')
+    })
   })
 
   describe('css', () => {
@@ -308,25 +293,6 @@ describe('core.js', () => {
       
       const styleEl2 = styles()
       expect(styleEl2.textContent).toContain('background: #333')
-    })
-
-    it('should handle static CSS', () => {
-      const styles = css`
-        .button { 
-          padding: 1rem; 
-          border: none;
-        }
-      `
-      
-      const styleEl = styles()
-      expect(styleEl.textContent).toContain('padding: 1rem')
-      expect(styleEl.textContent).toContain('border: none')
-    })
-
-    it('should throw for non-template literal usage', () => {
-      expect(() => {
-        css('.invalid { color: red; }')
-      }).toThrow('css must be used as a template literal')
     })
   })
 

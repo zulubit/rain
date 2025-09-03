@@ -5,29 +5,27 @@
 import { isReactive, $ } from './core.js'
 
 /**
- * @param {Element} element
- * @param {string} key
- * @param {any} val
+ * Sets an HTML attribute on an element with proper boolean handling
+ * @param {Element} element - Target DOM element
+ * @param {string} key - Attribute name
+ * @param {any} val - Attribute value
  * @private
  */
-function setElementValue(element, key, val) {
-  if (key in element && typeof element[key] !== 'function') {
-    element[key] = val
+function setElementAttribute(element, key, val) {
+  if (val == null || val === false) {
+    element.removeAttribute(key)
+  } else if (val === true) {
+    element.setAttribute(key, '')
   } else {
-    if (val == null || val === false) {
-      element.removeAttribute(key)
-    } else if (val === true) {
-      element.setAttribute(key, '')
-    } else {
-      element.setAttribute(key, String(val))
-    }
+    element.setAttribute(key, String(val))
   }
 }
 
 /**
- * @param {Element} element
- * @param {string} key
- * @param {any} value
+ * Processes a single JSX prop/attribute and applies it to the element
+ * @param {Element} element - Target DOM element
+ * @param {string} key - Property/attribute name
+ * @param {any} value - Property/attribute value
  * @private
  */
 function processAttribute(element, key, value) {
@@ -36,14 +34,15 @@ function processAttribute(element, key, value) {
     const eventName = key.slice(2).toLowerCase()
     element.addEventListener(eventName, value)
   }
-  // Handle direct property bindings (value, checked, etc.)
-  else if (shouldBindAsProperty(element, key)) {
+  // Handle $ prefix for property binding
+  else if (key.startsWith('$')) {
+    const propName = key.slice(1)
     if (isReactive(value)) {
       $.effect(() => {
-        element[key] = value()
+        element[propName] = value()
       })
     } else {
-      element[key] = value
+      element[propName] = value
     }
   }
   // Handle className special case
@@ -60,56 +59,22 @@ function processAttribute(element, key, value) {
   else if (key === 'ref' && typeof value === 'function') {
     value(element)
   }
-  // Handle style object
-  else if (key === 'style' && typeof value === 'object' && !isReactive(value)) {
-    Object.assign(element.style, value)
-  }
-  // Handle reactive style
-  else if (key === 'style' && isReactive(value)) {
-    $.effect(() => {
-      const styleValue = value()
-      if (typeof styleValue === 'object') {
-        Object.assign(element.style, styleValue)
-      } else {
-        element.style = styleValue
-      }
-    })
-  }
   // Handle reactive attributes
   else if (isReactive(value)) {
     $.effect(() => {
-      setElementValue(element, key, value())
+      setElementAttribute(element, key, value())
     })
   }
   // Handle static attributes
   else {
-    setElementValue(element, key, value)
+    setElementAttribute(element, key, value)
   }
 }
 
 /**
- * Properties that should be set directly rather than as attributes
- * @param {Element} element
- * @param {string} key
- * @returns {boolean}
- * @private
- */
-function shouldBindAsProperty(element, key) {
-  // Common properties that should be bound directly
-  const propertyNames = ['value', 'checked', 'selected', 'disabled', 'readOnly', 'multiple']
-
-  // For inputs, textareas, and selects, bind value as property
-  if ((element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT') &&
-      propertyNames.includes(key)) {
-    return true
-  }
-
-  return false
-}
-
-/**
- * @param {Element} element
- * @param {any} child
+ * Processes and appends a child element, handling various child types including reactive signals
+ * @param {Element} element - Parent element to append to
+ * @param {any} child - Child element (can be Node, string, number, array, or reactive signal)
  * @private
  */
 function processChild(element, child) {
@@ -146,17 +111,14 @@ function processChild(element, child) {
 }
 
 /**
- * Fragment component for grouping elements
- * @param {Object} props
- * @param {...any} children
- * @returns {Element}
+ * Fragment component for grouping elements without creating wrapper DOM nodes
+ * @param {Object} props - Props object (unused but kept for JSX compatibility)
+ * @param {...any} children - Child elements to group
+ * @returns {DocumentFragment} Native DocumentFragment containing all children
  */
 export function Fragment(props, ...children) {
-  const fragment = document.createElement('div')
-  fragment.style.display = 'contents'
-
+  const fragment = document.createDocumentFragment()
   children.flat(Infinity).forEach(child => processChild(fragment, child))
-
   return fragment
 }
 
@@ -184,31 +146,14 @@ export function jsx(type, props, ...children) {
   }
 
   const element = document.createElement(type)
-  let selectValueSignal = null
 
-  // Process children first
   children.flat(Infinity).forEach(child => processChild(element, child))
 
-  // Process props/attributes
   if (props) {
     for (const [key, value] of Object.entries(props)) {
-      // Skip children prop (already handled)
       if (key === 'children') continue
-
-      // Special handling for select value
-      if (element.tagName === 'SELECT' && key === 'value' && isReactive(value)) {
-        selectValueSignal = value
-      } else {
-        processAttribute(element, key, value)
-      }
+      processAttribute(element, key, value)
     }
-  }
-
-  // Handle select value reactivity after options are added
-  if (selectValueSignal) {
-    $.effect(() => {
-      element.value = selectValueSignal()
-    })
   }
 
   return element

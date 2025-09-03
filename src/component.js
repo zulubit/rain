@@ -5,6 +5,11 @@
 import { render, $ } from './core.js'
 
 /**
+ * Validates and normalizes parameters for rain() component registration
+ * @param {string} name - Component name
+ * @param {string[]|Function} propNames - Property names or factory function
+ * @param {Function} [factory] - Component factory function
+ * @returns {{name: string, propNames: string[], factory: Function}} Validated parameters
  * @private
  */
 function validateRainParams(name, propNames, factory) {
@@ -27,16 +32,18 @@ function validateRainParams(name, propNames, factory) {
 }
 
 /**
- * @param {HTMLElement} component
+ * Initializes lifecycle hook arrays on a component instance
+ * @param {HTMLElement} component - Component instance to set up
  * @private
  */
 function setupLifecycleHooks(component) {
-  component._m = []
-  component._um = []
+  component._mountedCallbacks = []
+  component._unmountedCallbacks = []
 }
 
 /**
- * @param {HTMLElement} component
+ * Initializes memory management for automatic cleanup tracking
+ * @param {HTMLElement} component - Component instance to set up
  * @private
  */
 function setupMemoryManagement(component) {
@@ -44,11 +51,12 @@ function setupMemoryManagement(component) {
 }
 
 /**
- * @param {string} name
- * @param {string[]} propNames
- * @param {Function} factory
- * @param {'open' | 'closed'} shadowMode
- * @returns {typeof HTMLElement}
+ * Creates a Web Component class with reactive props and shadow DOM
+ * @param {string} name - Component name for debugging
+ * @param {string[]} propNames - Array of observed attribute names
+ * @param {Function} factory - Component factory function
+ * @param {'open' | 'closed'} shadowMode - Shadow DOM mode
+ * @returns {typeof HTMLElement} Custom element class
  * @private
  */
 function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
@@ -148,7 +156,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
     connectedCallback() {
       this._isMounted = true
 
-      this._m?.forEach(cb => {
+      this._mountedCallbacks?.forEach(cb => {
         try {
           cb()
         } catch (error) {
@@ -168,7 +176,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         }
       })
 
-      this._um?.forEach(cb => {
+      this._unmountedCallbacks?.forEach(cb => {
         try {
           cb()
         } catch (error) {
@@ -189,6 +197,10 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
   return ComponentClass
 }
 
+/**
+ * Current component instance being constructed - used for lifecycle hooks
+ * @type {HTMLElement|null}
+ */
 let currentInstance
 
 /**
@@ -264,7 +276,7 @@ function onMounted(cb) {
     console.warn('onMounted called outside component factory')
     return
   }
-  (currentInstance._m ||= []).push(cb)
+  (currentInstance._mountedCallbacks ||= []).push(cb)
 }
 
 /**
@@ -278,7 +290,7 @@ function onUnmounted(cb) {
     console.warn('onUnmounted called outside component factory')
     return
   }
-  (currentInstance._um ||= []).push(cb)
+  (currentInstance._unmountedCallbacks ||= []).push(cb)
 }
 
 export { rain, onMounted, onUnmounted }
