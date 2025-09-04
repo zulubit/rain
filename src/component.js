@@ -204,7 +204,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
 let currentInstance
 
 /**
- * Defines a reactive web component with closed shadow DOM
+ * Defines a reactive web component with open shadow DOM (default)
  * @param {string} name
  * @param {string[] | Function} propNames
  * @param {Function} [factory]
@@ -225,7 +225,7 @@ function rain(name, propNames, factory) {
       return true
     }
 
-    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'closed')
+    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'open')
     customElements.define(validatedName, ComponentClass)
     return true
   } catch (error) {
@@ -235,17 +235,17 @@ function rain(name, propNames, factory) {
 }
 
 /**
- * Defines a reactive web component with open shadow DOM
+ * Defines a reactive web component with closed shadow DOM
  * @param {string} name
  * @param {string[] | Function} propNames
  * @param {Function} [factory]
  * @returns {boolean}
  * @example
- * rain.open('my-card', ['title'], function(props) {
- *   return () => <div>{props.title()}</div>
+ * rain.closed('secure-widget', ['data'], function(props) {
+ *   return () => <div>{props.data()}</div>
  * })
  */
-rain.open = function(name, propNames, factory) {
+rain.closed = function(name, propNames, factory) {
   try {
     const { name: validatedName, propNames: validatedPropNames, factory: validatedFactory } = validateRainParams(name, propNames, factory)
 
@@ -256,7 +256,7 @@ rain.open = function(name, propNames, factory) {
       return true
     }
 
-    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'open')
+    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'closed')
     customElements.define(validatedName, ComponentClass)
     return true
   } catch (error) {

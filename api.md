@@ -125,7 +125,7 @@ rain('styled-component', function() {
 
 ### `rain(name, factory)`
 ### `rain(name, propNames, factory)`
-Registers a Web Component with closed shadow DOM (default).
+Registers a Web Component with open shadow DOM (default).
 
 ```jsx
 // Simple component
@@ -151,13 +151,13 @@ rain('user-card', ['name', 'age'], function(props) {
 
 **Returns**: `boolean` - success status
 
-### `rain.open(name, factory)`
-### `rain.open(name, propNames, factory)`
-Registers a Web Component with open shadow DOM (allows external JavaScript access).
+### `rain.closed(name, factory)`
+### `rain.closed(name, propNames, factory)`
+Registers a Web Component with closed shadow DOM (prevents external JavaScript access).
 
 ```jsx
-rain.open('my-component', ['title'], function(props) {
-  return () => <div>{props.title()}</div>
+rain.closed('secure-widget', ['data'], function(props) {
+  return () => <div>{props.data()}</div>
 })
 ```
 

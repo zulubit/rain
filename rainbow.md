@@ -131,11 +131,17 @@ Update current page data by hitting current route.
 
 ```jsx
 $$.update({ data: { action: 'refresh' } })
-$$.update({ method: 'GET' })
+$$.update({ 
+  method: 'GET',
+  onError: (error) => console.error('Update failed:', error)
+})
 ```
 
 **Parameters**:
 - `options?: Object` - Request options
+  - `method?: string` - HTTP method (default: 'POST')
+  - `data?: Object` - Request data
+  - `onError?: Function` - Error callback
 
 **Returns**: `Promise<Object>` - Server response
 
@@ -149,16 +155,26 @@ Submit form with automatic data collection and file uploads.
   <button>Save</button>
 </form>
 
-// With callbacks
+// With validation and error handling
 <form onSubmit={$$.submitForm('/users/update', {
-  onSuccess: () => window.location.href = '/users',
-  onError: (err) => console.log('Failed!')
+  onBeforeSubmit: (formData) => {
+    if (!formData.get('email').includes('@')) {
+      alert('Invalid email')
+      return false // Prevent submission
+    }
+  },
+  onError: (error) => {
+    alert('Server error: ' + error.message)
+  }
 })}>
 ```
 
 **Parameters**:
 - `url: string` - Form action URL  
 - `options?: Object` - Submit options
+  - `method?: string` - HTTP method (default: 'POST')
+  - `onBeforeSubmit?: Function` - Validation callback, return false to cancel
+  - `onError?: Function` - Error callback
 
 **Returns**: `Function` - Event handler for form onSubmit
 

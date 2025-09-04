@@ -60,7 +60,6 @@ function updateGlobalData(newGlobalData) {
  * @param {Object} options - Request options
  * @param {string} [options.method='GET'] - HTTP method
  * @param {Object} [options.data={}] - Request data
- * @param {Function} [options.onSuccess] - Success callback
  * @param {Function} [options.onError] - Error callback
  * @param {boolean} [options.includeContext=false] - Include page/global data in request
  * @returns {Promise<Object>} Response data
@@ -70,7 +69,6 @@ async function makeRequest(url, options = {}) {
   const {
     method = 'GET',
     data = {},
-    onSuccess,
     onError,
     includeContext = false
   } = options
@@ -123,10 +121,6 @@ async function makeRequest(url, options = {}) {
       updateGlobalData(responseData.globalData)
     }
 
-    if (onSuccess) {
-      onSuccess(responseData)
-    }
-
     return responseData
   } catch (error) {
     console.error('Request failed:', error)
@@ -149,13 +143,11 @@ async function makeRequest(url, options = {}) {
   }
 }
 
-
 /**
  * Update current page data by making request to current route
  * @param {Object} [options] - Request options
  * @param {string} [options.method='POST'] - HTTP method
  * @param {Object} [options.data] - Request data
- * @param {Function} [options.onSuccess] - Success callback
  * @param {Function} [options.onError] - Error callback
  * @returns {Promise<Object>} Server response
  * @example
@@ -175,14 +167,27 @@ $$.update = async function(options = {}) {
  * @param {string} url - Form action URL
  * @param {Object} [options] - Submit options
  * @param {string} [options.method='POST'] - HTTP method
- * @param {Function} [options.onSuccess] - Success callback
- * @param {Function} [options.onError] - Error callback
+ * @param {Function} [options.onBeforeSubmit] - Called before submission with FormData, return false to cancel
+ * @param {Function} [options.onError] - Called on server/network errors
  * @returns {Function} Event handler function for form onSubmit
  * @example
  * <form onSubmit={$$.submitForm('/users/create')}>
  *   <input name="name" />
  *   <input type="file" name="avatar" />
  * </form>
+ *
+ * // With validation and error handling
+ * <form onSubmit={$$.submitForm('/users/create', {
+ *   onBeforeSubmit: (formData) => {
+ *     if (!formData.get('email').includes('@')) {
+ *       alert('Invalid email')
+ *       return false
+ *     }
+ *   },
+ *   onError: (error) => {
+ *     alert('Server error: ' + error.message)
+ *   }
+ * })}>
  */
 $$.submitForm = function(url, options = {}) {
   return async function(event) {
@@ -190,6 +195,14 @@ $$.submitForm = function(url, options = {}) {
 
     const form = event.target
     const formData = new FormData(form)
+
+    // Call onBeforeSubmit if provided
+    if (options.onBeforeSubmit) {
+      const shouldContinue = options.onBeforeSubmit(formData)
+      if (shouldContinue === false) {
+        return // Abort submission
+      }
+    }
 
     // Check if form has files for multipart handling
     const hasFiles = Array.from(formData.entries()).some(([, value]) => value instanceof File)
@@ -212,7 +225,6 @@ $$.submitForm = function(url, options = {}) {
       data: requestData,
       headers,
       includeContext: true,
-      onSuccess: options.onSuccess,
       onError: options.onError
     }
 
@@ -249,10 +261,6 @@ $$.submitForm = function(url, options = {}) {
           updateGlobalData(responseData.globalData)
         }
 
-        if (options.onSuccess) {
-          options.onSuccess(responseData)
-        }
-
         return responseData
       } catch (error) {
         console.error('Form submit failed:', error)
@@ -281,7 +289,7 @@ $$.submitForm = function(url, options = {}) {
 /**
  * rain-bow component - Context provider for server-driven apps
  */
-rain.open('rain-bow', ['page-data', 'global-data'], function(props) {
+rain('rain-bow', ['page-data', 'global-data'], function(props) {
   // Parse JSON from attributes and update signals
   const pageData = $.computed(() => {
     try {

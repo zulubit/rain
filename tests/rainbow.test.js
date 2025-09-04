@@ -176,7 +176,7 @@ describe('rainbow.js', () => {
       await new Promise(resolve => setTimeout(resolve, 10))
 
       // Now create a test component that uses the context
-      rain.open('test-consumer', function() {
+      rain('test-consumer', function() {
         const pageData = $$.page
         const globalData = $$.global
         

@@ -24,7 +24,7 @@ describe('component.js', () => {
     })
 
     it('should create component instance', () => {
-      rain.open('test-instance', function() {
+      rain('test-instance', function() {
         return () => jsx('div', null, 'Test Instance')
       })
       
@@ -39,7 +39,7 @@ describe('component.js', () => {
     })
 
     it('should handle component with props', () => {
-      rain.open('test-props', ['name', 'age'], function(props) {
+      rain('test-props', ['name', 'age'], function(props) {
         return () => jsx('div', null, props.name, ' is ', props.age)
       })
       
@@ -54,7 +54,7 @@ describe('component.js', () => {
     })
 
     it('should update when attributes change', () => {
-      rain.open('test-reactive', ['value'], function(props) {
+      rain('test-reactive', ['value'], function(props) {
         return () => jsx('div', null, 'Value: ', props.value)
       })
       
@@ -75,8 +75,8 @@ describe('component.js', () => {
     })
 
     it('should skip re-registration of same component', () => {
-      rain.open('test-duplicate', () => () => jsx('div', null, 'First'))
-      const result = rain.open('test-duplicate', () => () => jsx('div', null, 'Second'))
+      rain('test-duplicate', () => () => jsx('div', null, 'First'))
+      const result = rain('test-duplicate', () => () => jsx('div', null, 'Second'))
       
       expect(result).toBe(true) // Still returns true even when skipped
       
@@ -106,7 +106,7 @@ describe('component.js', () => {
     })
 
     it('should accept function as second parameter when no props needed', () => {
-      const registered = rain.open('test-no-props', function() {
+      const registered = rain('test-no-props', function() {
         return () => jsx('div', null, 'No Props')
       })
       
@@ -125,7 +125,7 @@ describe('component.js', () => {
     it('should call onMounted when connected', () => {
       let mounted = false
       
-      rain.open('test-mounted', function() {
+      rain('test-mounted', function() {
         onMounted(() => {
           mounted = true
         })
@@ -144,7 +144,7 @@ describe('component.js', () => {
     it('should call onUnmounted when disconnected', () => {
       let unmounted = false
       
-      rain.open('test-unmounted', function() {
+      rain('test-unmounted', function() {
         onUnmounted(() => {
           unmounted = true
         })
@@ -163,7 +163,7 @@ describe('component.js', () => {
     it('should support multiple lifecycle hooks', () => {
       let calls = []
       
-      rain.open('test-multiple-hooks', function() {
+      rain('test-multiple-hooks', function() {
         onMounted(() => calls.push('mounted1'))
         onMounted(() => calls.push('mounted2'))
         onUnmounted(() => calls.push('unmounted1'))
@@ -197,7 +197,7 @@ describe('component.js', () => {
     it('should have emit method for custom events', () => {
       let eventReceived = null
       
-      rain.open('test-emit', function() {
+      rain('test-emit', function() {
         return () => jsx('div', null, 'Emit Test')
       })
       
@@ -216,7 +216,7 @@ describe('component.js', () => {
     })
 
     it('should handle internal state with signals', () => {
-      rain.open('test-state', function() {
+      rain('test-state', function() {
         const [count, setCount] = $(0)
         return () => jsx('div', null,
           jsx('span', null, 'Count: ', count),
@@ -233,7 +233,7 @@ describe('component.js', () => {
     })
 
     it('should handle factory errors gracefully', () => {
-      rain.open('test-factory-error', function() {
+      rain('test-factory-error', function() {
         throw new Error('Factory error')
       })
       
@@ -246,7 +246,7 @@ describe('component.js', () => {
     })
 
     it('should handle render errors gracefully', () => {
-      rain.open('test-render-error', function() {
+      rain('test-render-error', function() {
         return () => {
           throw new Error('Render error')
         }
@@ -263,7 +263,7 @@ describe('component.js', () => {
 
   describe('props reactivity', () => {
     it('should initialize props from attributes', async () => {
-      rain.open('test-props-init', ['name', 'count'], function(props) {
+      rain('test-props-init', ['name', 'count'], function(props) {
         return () => jsx('div', null, 'Name: ', props.name, ', Count: ', props.count)
       })
       
@@ -291,7 +291,7 @@ describe('component.js', () => {
     })
 
     it('should handle empty props', () => {
-      rain.open('test-empty-props', [], function(props) {
+      rain('test-empty-props', [], function(props) {
         return () => jsx('div', null, 'No props')
       })
       
@@ -304,7 +304,7 @@ describe('component.js', () => {
     })
 
     it('should default to empty string for missing attributes', () => {
-      rain.open('test-missing-attrs', ['missing'], function(props) {
+      rain('test-missing-attrs', ['missing'], function(props) {
         return () => jsx('div', null, 'Missing: "', props.missing, '"')
       })
       
