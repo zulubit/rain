@@ -81,17 +81,6 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
       const root = this.attachShadow({ mode: shadowMode })
       this._root = root
 
-      // Auto-adopt stylesheet if enabled
-      if (autoAdoptEnabled) {
-        scanAndAdoptStylesheet().then(stylesheet => {
-          if (stylesheet) {
-            root.adoptedStyleSheets = [...root.adoptedStyleSheets, stylesheet]
-          }
-        }).catch(() => {
-          // Silently fail
-        })
-      }
-
       currentInstance = this
 
       this.emit = (eventName, detail) => {
@@ -190,45 +179,6 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
 let currentInstance
 
 /**
- * Auto-adoption state and cache
- */
-let autoAdoptEnabled = false
-let autoAdoptStylesheet = null
-
-/**
- * @private
- * @returns {Promise<CSSStyleSheet|null>}
- */
-async function scanAndAdoptStylesheet() {
-  if (autoAdoptStylesheet !== null) {
-    return autoAdoptStylesheet
-  }
-
-  try {
-    const link = document.head.querySelector('link[data-rain-adopt][href]')
-
-    if (link) {
-      const response = await fetch(link.href)
-      if (response.ok) {
-        const cssText = await response.text()
-        const sheet = new CSSStyleSheet()
-        await sheet.replace(cssText)
-        autoAdoptStylesheet = sheet
-        return sheet
-      }
-    }
-  } catch (error) {
-    // Silently fail
-    if (typeof window !== 'undefined' && window.RAIN_DEBUG) {
-      console.log('[Rain:AutoAdopt] Failed to load stylesheet:', error.message)
-    }
-  }
-
-  autoAdoptStylesheet = false // Mark as attempted but failed
-  return null
-}
-
-/**
  * Defines a reactive web component with open shadow DOM (default)
  * @param {string} name
  * @param {string[] | Function} propNames
@@ -291,21 +241,28 @@ rain.closed = function(name, propNames, factory) {
 }
 
 /**
- * Enables automatic adoption of stylesheets marked with data-rain-adopt
+ * Helper to create and adopt stylesheet from CSS string
+ * @param {string} css - CSS string to adopt
  * @example
- * rain.autoAdopt() // Enable for all components
+ * import styles from './theme.css?inline'
+ * rain.adopt(styles)
  */
-rain.autoAdopt = function() {
-  autoAdoptEnabled = true
-}
+rain.adopt = function(css) {
+  if (!currentInstance) {
+    throwError('rain.adopt() can only be called within component factory')
+  }
+  if (!currentInstance._root) {
+    throwError('Component has no shadow root')
+  }
+  if (typeof css !== 'string') {
+    throwError('rain.adopt() expects a CSS string')
+  }
 
-/**
- * Reset auto-adopt state - for testing only
- * @private
- */
-rain._resetAutoAdopt = function() {
-  autoAdoptEnabled = false
-  autoAdoptStylesheet = null
+  const sheet = new CSSStyleSheet()
+  sheet.replaceSync(css)
+
+  const existingSheets = currentInstance._root.adoptedStyleSheets || []
+  currentInstance._root.adoptedStyleSheets = [...existingSheets, sheet]
 }
 
 /**

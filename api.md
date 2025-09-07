@@ -176,45 +176,6 @@ rain.closed('secure-component', ['data'], function(props) {
 **Returns**: `boolean` - success status
 
 
-### `rain.autoAdopt()`
-Enables automatic adoption of stylesheets marked with `data-rain-adopt` attribute for all components.
-
-```javascript
-// Enable auto-adopt for all components
-rain.autoAdopt()
-
-// Mark a stylesheet in HTML head for automatic adoption
-// <link rel="stylesheet" href="styles.css" data-rain-adopt>
-```
-
-**Benefits**:
-- Automatically loads and adopts external stylesheets into component shadow DOM
-- Uses Constructable Stylesheets for optimal performance  
-- Caches stylesheet content - fetched only once for all components
-- Gracefully handles fetch errors without breaking components
-
-**Usage Example**:
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <link rel="stylesheet" href="components.css" data-rain-adopt>
-</head>
-<body>
-  <script type="module">
-    import { rain } from './rainwc.js'
-    
-    // Enable auto-adoption
-    rain.autoAdopt()
-    
-    // All components will now automatically adopt components.css
-    rain('my-component', function() {
-      return () => html`<div class="styled">Auto-styled content</div>`
-    })
-  </script>
-</body>
-</html>
-```
 
 ### `getShadowRoot()`
 Gets the shadow root of the current component - only callable within component factory functions.
@@ -243,36 +204,56 @@ rain('my-component', function() {
 
 ## CSS Styling
 
-### Automatic Stylesheet Adoption
-RainWC can automatically adopt external stylesheets into component shadow DOM:
+### Preventing Flash of Unstyled Content (FOUC)
 
-1. **Enable auto-adoption** with `rain.autoAdopt()`
-2. **Mark stylesheets** in HTML head with `data-rain-adopt` attribute
-3. **All components** automatically receive the styles
+To prevent unstyled content from appearing while components are loading, add this CSS to your HTML head:
 
 ```html
-<!DOCTYPE html>
-<html>
 <head>
-  <!-- This stylesheet will be auto-adopted by all components -->
-  <link rel="stylesheet" href="theme.css" data-rain-adopt>
+  <!-- Prevent FOUC - hide undefined custom elements -->
+  <style>
+    :not(:defined) {
+      visibility: hidden;
+    }
+    :not(:defined) * {
+      visibility: hidden;
+    }
+  </style>
+  <!-- Your other head content -->
 </head>
-<body>
-  <script type="module">
-    import { rain } from 'rainwc'
-    
-    // Enable automatic stylesheet adoption
-    rain.autoAdopt()
-    
-    rain('themed-button', function() {
-      return () => html`<button class="primary">Styled Button</button>`
-    })
-  </script>
-  
-  <themed-button></themed-button>
-</body>
-</html>
 ```
+
+This hides all undefined custom elements and their children until they are registered and upgraded by the browser.
+
+### `rain.adopt(css)`
+Helper function to create and adopt stylesheets from CSS strings - only callable within component factory functions.
+
+```javascript
+// Import CSS as text using ?inline parameter
+import styles from './theme.css?inline'
+
+rain('themed-button', function() {
+  // Adopt stylesheet using helper
+  rain.adopt(styles)
+  
+  return () => html`<button class="primary">Styled Button</button>`
+})
+```
+
+**Parameters**:
+- `css: string` - CSS string to create stylesheet from
+
+**Throws**:
+- Error if called outside component factory
+- Error if component has no shadow root
+- Error if css parameter is not a string
+
+**Benefits**:
+- Clean integration with Vite's build system
+- CSS is processed and bundled normally  
+- No runtime fetching or parsing needed
+- Type-safe imports with proper IDE support
+- Concise helper eliminates boilerplate code
 
 ### Manual Stylesheet Control
 For more control, use `getShadowRoot()` to manually manage stylesheets:

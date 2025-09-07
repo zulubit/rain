@@ -1,6 +1,6 @@
 {
   "name": "rainwc",
-  "version": "0.0.12",
+  "version": "0.2.2",
   "description": "Fine-grained reactive Web Components framework",
   "type": "module",
   "main": "dist/rainwc.umd.js",
