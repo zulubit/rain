@@ -89,19 +89,13 @@ describe('component.js', () => {
     })
 
     it('should validate component name', () => {
-      const result1 = rain(null, () => () => html`<div></div>`)
-      expect(result1).toBe(false)
-      
-      const result2 = rain(123, () => () => html`<div></div>`)
-      expect(result2).toBe(false)
+      expect(() => rain(null, () => () => html`<div></div>`)).toThrow('Component name is required and must be a string')
+      expect(() => rain(123, () => () => html`<div></div>`)).toThrow('Component name is required and must be a string')
     })
 
     it('should validate factory function', () => {
-      const result1 = rain('test-invalid-factory', null)
-      expect(result1).toBe(false)
-      
-      const result2 = rain('test-invalid-factory2', 'not a function')
-      expect(result2).toBe(false)
+      expect(() => rain('test-invalid-factory', null)).toThrow('Component factory function is required')
+      expect(() => rain('test-invalid-factory2', 'not a function')).toThrow('Component factory function is required')
     })
 
     it('should accept function as second parameter when no props needed', () => {

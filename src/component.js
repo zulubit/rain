@@ -3,9 +3,13 @@
  */
 
 import { html, render, $ } from './core.js'
+import { logError, throwError } from './error-utils.js'
 
 /**
  * @private
+ * @param {string} name
+ * @param {string[]|Function} propNames
+ * @param {Function} [factory]
  */
 function validateRainParams(name, propNames, factory) {
   if (typeof propNames === 'function') {
@@ -14,21 +18,21 @@ function validateRainParams(name, propNames, factory) {
   }
 
   if (!name || typeof name !== 'string') {
-    throw new Error('Component name is required and must be a string')
+    throwError('Component name is required and must be a string')
   }
   if (!factory || typeof factory !== 'function') {
-    throw new Error('Component factory function is required')
+    throwError('Component factory function is required')
   }
   if (propNames && !Array.isArray(propNames)) {
-    throw new Error('Props must be an array of strings')
+    throwError('Props must be an array of strings')
   }
 
   return { name, propNames: propNames || [], factory }
 }
 
 /**
- * @param {HTMLElement} component
  * @private
+ * @param {HTMLElement} component
  */
 function setupLifecycleHooks(component) {
   component._m = []
@@ -36,20 +40,20 @@ function setupLifecycleHooks(component) {
 }
 
 /**
- * @param {HTMLElement} component
  * @private
+ * @param {HTMLElement} component
  */
 function setupMemoryManagement(component) {
   component._cleanups = new Set()
 }
 
 /**
+ * @private
  * @param {string} name
  * @param {string[]} propNames
  * @param {Function} factory
- * @param {'open' | 'closed'} shadowMode
+ * @param {'open'|'closed'} [shadowMode='closed']
  * @returns {typeof HTMLElement}
- * @private
  */
 function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
   const ComponentClass = class extends HTMLElement {
@@ -104,7 +108,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
       try {
         template = factory.call(this, props)
       } catch (error) {
-        console.error(`Component error in ${name} during factory:`, error)
+        logError(`Component error in ${name} during factory:`, error)
         template = () => html`<div style="color: red; padding: 1rem;">
           Component "${name}" failed to render. Check console for details.
         </div>`
@@ -116,7 +120,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
       try {
         templateResult = template()
       } catch (error) {
-        console.error(`Component error in ${name} during render:`, error)
+        logError(`Component error in ${name} during render:`, error)
         templateResult = html`<div style="color: red; padding: 1rem;">
           Component "${name}" failed to render. Check console for details.
         </div>`
@@ -125,7 +129,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
       try {
         render(templateResult, root)
       } catch (renderError) {
-        console.error(`Component error in ${name} during render-critical:`, renderError)
+        logError(`Component error in ${name} during render-critical:`, renderError)
         root.innerHTML = `<div style="padding: 1rem; background: #fee; border: 1px solid #fcc;">
           <strong style="color: #c00;">Critical Render Error: ${name}</strong>
         </div>`
@@ -152,7 +156,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         try {
           cb()
         } catch (error) {
-          console.error(`Component error in ${this.tagName.toLowerCase()} during connected:`, error)
+          logError(`Component error in ${this.tagName.toLowerCase()} during connected:`, error)
         }
       })
     }
@@ -163,7 +167,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
           try {
             cleanup()
           } catch (error) {
-            console.error(`Component error in ${this.tagName.toLowerCase()} during cleanup:`, error)
+            logError(`Component error in ${this.tagName.toLowerCase()} during cleanup:`, error)
           }
         }
       })
@@ -172,7 +176,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         try {
           cb()
         } catch (error) {
-          console.error(`Component error in ${this.tagName.toLowerCase()} during unmount:`, error)
+          logError(`Component error in ${this.tagName.toLowerCase()} during unmount:`, error)
         }
       })
     }
@@ -198,9 +202,8 @@ let autoAdoptEnabled = false
 let autoAdoptStylesheet = null
 
 /**
- * Scans document head for first stylesheet marked with data-rain-adopt
- * @returns {Promise<CSSStyleSheet|null>} The adopted stylesheet or null
  * @private
+ * @returns {Promise<CSSStyleSheet|null>}
  */
 async function scanAndAdoptStylesheet() {
   if (autoAdoptStylesheet !== null) {
@@ -257,7 +260,7 @@ function rain(name, propNames, factory) {
     customElements.define(validatedName, ComponentClass)
     return true
   } catch (error) {
-    console.error(`Failed to register component '${name}':`, error)
+    logError(`Failed to register component '${name}':`, error)
     return false
   }
 }
@@ -288,7 +291,7 @@ rain.open = function(name, propNames, factory) {
     customElements.define(validatedName, ComponentClass)
     return true
   } catch (error) {
-    console.error(`Failed to register component '${name}':`, error)
+    logError(`Failed to register component '${name}':`, error)
     return false
   }
 }
@@ -348,10 +351,10 @@ function onUnmounted(cb) {
  */
 function getShadowRoot() {
   if (!currentInstance) {
-    throw new Error('getShadowRoot() called outside component factory')
+    throwError('getShadowRoot() called outside component factory')
   }
   if (!currentInstance._root) {
-    throw new Error('Component has no shadow root')
+    throwError('Component has no shadow root')
   }
   return currentInstance._root
 }

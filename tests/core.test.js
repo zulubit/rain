@@ -7,28 +7,28 @@ const render = core.render || core.default?.render
 
 describe('core.js', () => {
   describe('$ (signal creation)', () => {
-    it('should create signal with initial value', () => {
+    it('should create and update signal values', () => {
       const [count, setCount] = $(0)
       expect(count()).toBe(0)
-    })
-
-    it('should update signal value', () => {
-      const [count, setCount] = $(0)
+      
       setCount(5)
       expect(count()).toBe(5)
     })
 
     it('should work with different data types', () => {
+      // String signals
       const [str, setStr] = $('hello')
       expect(str()).toBe('hello')
       setStr('world')
       expect(str()).toBe('world')
 
+      // Object signals
       const [obj, setObj] = $({ foo: 'bar' })
       expect(obj()).toEqual({ foo: 'bar' })
       setObj({ baz: 'qux' })
       expect(obj()).toEqual({ baz: 'qux' })
 
+      // Array signals
       const [arr, setArr] = $([1, 2, 3])
       expect(arr()).toEqual([1, 2, 3])
       setArr([4, 5])
@@ -45,13 +45,17 @@ describe('core.js', () => {
   })
 
   describe('$.computed', () => {
-    it('should create computed signal', () => {
+    it('should create and update computed signal', () => {
       const [count, setCount] = $(2)
       const doubled = $.computed(() => count() * 2)
       expect(doubled()).toBe(4)
+      
+      // Test dependency updates
+      setCount(5)
+      expect(doubled()).toBe(10)
     })
 
-    it('should update when dependencies change', () => {
+    it('should handle multiple dependencies', () => {
       const [a, setA] = $(2)
       const [b, setB] = $(3)
       const sum = $.computed(() => a() + b())
@@ -62,21 +66,10 @@ describe('core.js', () => {
       setB(5)
       expect(sum()).toBe(15)
     })
-
-    it('should throw for non-function argument', () => {
-      expect(() => $.computed('not a function')).toThrow('$.computed expects a function')
-      expect(() => $.computed(123)).toThrow('$.computed expects a function')
-    })
   })
 
   describe('$.effect', () => {
-    it('should run effect immediately', () => {
-      const fn = vi.fn()
-      $.effect(fn)
-      expect(fn).toHaveBeenCalledTimes(1)
-    })
-
-    it('should re-run when dependencies change', () => {
+    it('should run immediately and re-run on dependencies', () => {
       const [count, setCount] = $(0)
       const fn = vi.fn(() => count())
       
@@ -90,13 +83,21 @@ describe('core.js', () => {
       expect(fn).toHaveBeenCalledTimes(3)
     })
 
-    it('should throw for non-function argument', () => {
-      expect(() => $.effect('not a function')).toThrow('$.effect expects a function')
-    })
-
     it('should return cleanup function', () => {
       const cleanup = $.effect(() => {})
       expect(typeof cleanup).toBe('function')
+    })
+  })
+
+  describe('signal validation', () => {
+    it('should throw for non-function arguments', () => {
+      // $.computed validation
+      expect(() => $.computed('not a function')).toThrow('$.computed expects a function')
+      expect(() => $.computed(123)).toThrow('$.computed expects a function')
+      
+      // $.effect validation  
+      expect(() => $.effect('not a function')).toThrow('$.effect expects a function')
+      expect(() => $.effect(null)).toThrow('$.effect expects a function')
     })
   })
 
@@ -185,15 +186,21 @@ describe('core.js', () => {
       expect(el2.disabled).toBe(false)
     })
 
-    it('should handle fragments with frag tag', () => {
-      const frag = html`<frag>
-        <div>First</div>
-        <div>Second</div>
-      </frag>`
-      expect(frag.style.display).toBe('contents')
-      expect(frag.children).toHaveLength(2)
-      expect(frag.children[0].textContent).toBe('First')
-      expect(frag.children[1].textContent).toBe('Second')
+    it('should throw error for multiple root elements', () => {
+      expect(() => {
+        html`<div>First</div><div>Second</div>`
+      }).toThrow('Multiple root elements are not allowed')
+    })
+    
+    it('should allow single root element', () => {
+      const el = html`<div>
+        <span>First</span>
+        <span>Second</span>
+      </div>`
+      expect(el.tagName).toBe('DIV')
+      expect(el.children).toHaveLength(2)
+      expect(el.children[0].textContent).toBe('First')
+      expect(el.children[1].textContent).toBe('Second')
     })
   })
 
@@ -409,9 +416,9 @@ describe('core.js', () => {
     })
   })
 
-  describe('$.DHTML', () => {
+  describe('$.raw', () => {
     it('should create document fragment from HTML string', () => {
-      const fragment = $.DHTML('<p>Hello</p><span>World</span>')
+      const fragment = $.raw('<p>Hello</p><span>World</span>')
       expect(fragment instanceof DocumentFragment).toBe(true)
       
       const div = document.createElement('div')
@@ -420,19 +427,19 @@ describe('core.js', () => {
     })
 
     it('should handle empty HTML string', () => {
-      const fragment = $.DHTML('')
+      const fragment = $.raw('')
       expect(fragment instanceof DocumentFragment).toBe(true)
       expect(fragment.childNodes.length).toBe(0)
     })
 
     it('should throw for non-string input', () => {
-      expect(() => $.DHTML(123)).toThrow('$.DHTML expects a string')
-      expect(() => $.DHTML(null)).toThrow('$.DHTML expects a string')
-      expect(() => $.DHTML(undefined)).toThrow('$.DHTML expects a string')
+      expect(() => $.raw(123)).toThrow('$.raw expects a string')
+      expect(() => $.raw(null)).toThrow('$.raw expects a string')
+      expect(() => $.raw(undefined)).toThrow('$.raw expects a string')
     })
 
     it('should work with html template', () => {
-      const element = html`<div>${$.DHTML('<strong>Bold text</strong>')}</div>`
+      const element = html`<div>${$.raw('<strong>Bold text</strong>')}</div>`
       expect(element.innerHTML).toBe('<strong>Bold text</strong>')
     })
   })

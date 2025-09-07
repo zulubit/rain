@@ -384,6 +384,27 @@ $.list(items, (item, index) => html`<div>${index}: ${item}</div>`)
 - Preserves component state and DOM focus
 - Fallback to full re-render with invalid/duplicate keys
 
+### `$.raw(html)`
+Creates DOM nodes from raw HTML string (**bypasses XSS protection**).
+
+```javascript
+// Create HTML elements from string
+const fragment = $.raw('<p>Hello <strong>World</strong></p>')
+
+// Use with templates (be careful of XSS!)
+const userContent = '<script>alert("xss")</script>' // Dangerous!
+const safeContent = '<p>Safe content</p>'
+html`<div>${$.raw(safeContent)}</div>`
+```
+
+**Parameters**:
+- `html: string` - HTML string to parse
+
+**Returns**: `DocumentFragment` - DOM fragment containing parsed elements
+
+**⚠️ Security Warning**: 
+This function bypasses XSS protection by setting `innerHTML` directly. Only use with trusted HTML content. Never use with user-provided input without proper sanitization.
+
 ### `render(element, container)`
 Renders element to container with cleanup.
 
@@ -449,23 +470,27 @@ html`<button disabled=${isDisabled}>Button</button>`
 // disabled=true sets attribute, disabled=false removes it
 ```
 
-### Fragments
-Use `<frag>` to group elements without creating wrapper DOM:
+### Single Root Element Requirement
+Templates must have a single root element:
 
 ```javascript
+// ✅ Valid - single root element
 html`
-  <frag>
+  <div>
     <h1>Title</h1>
     <p>Content</p>
-  </frag>
+  </div>
 `
-// Creates h1 and p elements with display: contents container
+
+// ❌ Invalid - multiple root elements
+html`
+  <h1>Title</h1>
+  <p>Content</p>
+`
+// Throws: "Multiple root elements are not allowed"
 ```
 
-**Benefits**:
-- Groups elements logically without affecting layout
-- Uses `display: contents` CSS property
-- Useful for conditional rendering of multiple elements
+**Note**: If you need to group multiple elements, wrap them in a container element like `<div>` or use semantic HTML elements like `<section>`, `<article>`, etc.
 
 ## Component Communication
 
