@@ -108,10 +108,8 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
       try {
         template = factory.call(this, props)
       } catch (error) {
-        logError(`Component error in ${name} during factory:`, error)
-        template = () => html`<div style="color: red; padding: 1rem;">
-          Component "${name}" failed to render. Check console for details.
-        </div>`
+        logError(`Component factory error in ${name}:`, error)
+        template = () => html`<div style="color: red; padding: 1rem;">Component "${name}" error</div>`
       }
 
       currentInstance = null
@@ -120,19 +118,15 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
       try {
         templateResult = template()
       } catch (error) {
-        logError(`Component error in ${name} during render:`, error)
-        templateResult = html`<div style="color: red; padding: 1rem;">
-          Component "${name}" failed to render. Check console for details.
-        </div>`
+        logError(`Component render error in ${name}:`, error)
+        templateResult = html`<div style="color: red; padding: 1rem;">Component "${name}" error</div>`
       }
 
       try {
         render(templateResult, root)
       } catch (renderError) {
-        logError(`Component error in ${name} during render-critical:`, renderError)
-        root.innerHTML = `<div style="padding: 1rem; background: #fee; border: 1px solid #fcc;">
-          <strong style="color: #c00;">Critical Render Error: ${name}</strong>
-        </div>`
+        logError(`Component critical error in ${name}:`, renderError)
+        root.innerHTML = `<div style="padding: 1rem; background: #fee; border: 1px solid #fcc;"><strong style="color: #c00;">Error: ${name}</strong></div>`
       }
 
       this._isMounted = false
@@ -156,7 +150,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         try {
           cb()
         } catch (error) {
-          logError(`Component error in ${this.tagName.toLowerCase()} during connected:`, error)
+          logError(`Component ${this.tagName.toLowerCase()} mount error:`, error)
         }
       })
     }
@@ -167,7 +161,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
           try {
             cleanup()
           } catch (error) {
-            logError(`Component error in ${this.tagName.toLowerCase()} during cleanup:`, error)
+            logError(`Component ${this.tagName.toLowerCase()} cleanup error:`, error)
           }
         }
       })
@@ -176,7 +170,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         try {
           cb()
         } catch (error) {
-          logError(`Component error in ${this.tagName.toLowerCase()} during unmount:`, error)
+          logError(`Component ${this.tagName.toLowerCase()} unmount error:`, error)
         }
       })
     }
@@ -235,7 +229,7 @@ async function scanAndAdoptStylesheet() {
 }
 
 /**
- * Defines a reactive web component with closed shadow DOM
+ * Defines a reactive web component with open shadow DOM (default)
  * @param {string} name
  * @param {string[] | Function} propNames
  * @param {Function} [factory]
@@ -256,7 +250,7 @@ function rain(name, propNames, factory) {
       return true
     }
 
-    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'closed')
+    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'open')
     customElements.define(validatedName, ComponentClass)
     return true
   } catch (error) {
@@ -266,17 +260,17 @@ function rain(name, propNames, factory) {
 }
 
 /**
- * Defines a reactive web component with open shadow DOM
+ * Defines a reactive web component with closed shadow DOM
  * @param {string} name
  * @param {string[] | Function} propNames
  * @param {Function} [factory]
  * @returns {boolean}
  * @example
- * rain.open('my-card', ['title'], function(props) {
- *   return () => html`<div>${props.title()}</div>`
+ * rain.closed('secure-component', ['data'], function(props) {
+ *   return () => html`<div>${props.data()}</div>`
  * })
  */
-rain.open = function(name, propNames, factory) {
+rain.closed = function(name, propNames, factory) {
   try {
     const { name: validatedName, propNames: validatedPropNames, factory: validatedFactory } = validateRainParams(name, propNames, factory)
 
@@ -287,7 +281,7 @@ rain.open = function(name, propNames, factory) {
       return true
     }
 
-    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'open')
+    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'closed')
     customElements.define(validatedName, ComponentClass)
     return true
   } catch (error) {

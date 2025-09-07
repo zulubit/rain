@@ -27,12 +27,12 @@ export function clearErrorHandler() {
  */
 export function throwError(message) {
   const error = new Error(message)
-  
+
   if (errorHandler) {
     errorHandler(error)
     return
   }
-  
+
   throw error
 }
 
@@ -43,11 +43,11 @@ export function throwError(message) {
  */
 export function logError(message, error) {
   const errorObj = error || new Error(message)
-  
+
   if (errorHandler) {
     errorHandler(errorObj)
     return
   }
-  
+
   console.error(message, error || '')
 }

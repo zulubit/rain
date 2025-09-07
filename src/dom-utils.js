@@ -3,7 +3,7 @@
  */
 
 import { effect } from '@preact/signals-core'
-import { SIGNAL_SYMBOL, isReactive } from './signal-utils.js'
+import { isReactive } from './signal-utils.js'
 
 /**
  * Sets an element's property or attribute based on the key and value

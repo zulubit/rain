@@ -8,7 +8,6 @@ import { html, css } from './template-utils.js'
 import { createList } from './list-utils.js'
 import { throwError } from './error-utils.js'
 
-
 /**
  * @private
  * @param {Element} container
@@ -52,7 +51,6 @@ function render(elementOrFn, container) {
 
   return { dispose: () => { } }
 }
-
 
 /**
  * Conditional rendering

@@ -23,7 +23,7 @@ describe('component.js', () => {
     })
 
     it('should create component instance', () => {
-      rain.open('test-instance', function() {
+      rain('test-instance', function() {
         return () => html`<div>Test Instance</div>`
       })
       
@@ -38,7 +38,7 @@ describe('component.js', () => {
     })
 
     it('should handle component with props', () => {
-      rain.open('test-props', ['name', 'age'], function(props) {
+      rain('test-props', ['name', 'age'], function(props) {
         return () => html`<div>${props.name} is ${props.age}</div>`
       })
       
@@ -53,7 +53,7 @@ describe('component.js', () => {
     })
 
     it('should update when attributes change', () => {
-      rain.open('test-reactive', ['value'], function(props) {
+      rain('test-reactive', ['value'], function(props) {
         return () => html`<div>Value: ${props.value}</div>`
       })
       
@@ -74,8 +74,8 @@ describe('component.js', () => {
     })
 
     it('should skip re-registration of same component', () => {
-      rain.open('test-duplicate', () => () => html`<div>First</div>`)
-      const result = rain.open('test-duplicate', () => () => html`<div>Second</div>`)
+      rain('test-duplicate', () => () => html`<div>First</div>`)
+      const result = rain('test-duplicate', () => () => html`<div>Second</div>`)
       
       expect(result).toBe(true) // Still returns true even when skipped
       
@@ -97,9 +97,57 @@ describe('component.js', () => {
       expect(() => rain('test-invalid-factory', null)).toThrow('Component factory function is required')
       expect(() => rain('test-invalid-factory2', 'not a function')).toThrow('Component factory function is required')
     })
+  })
+
+  describe('rain.closed shadow DOM mode', () => {
+    it('should create component with closed shadow DOM', () => {
+      rain.closed('test-closed', function() {
+        return () => html`<div>Closed Component</div>`
+      })
+      
+      const element = document.createElement('test-closed')
+      document.body.appendChild(element)
+      
+      // Shadow root should be closed (null when accessed externally)
+      expect(element.shadowRoot).toBeNull()
+      
+      document.body.removeChild(element)
+    })
+
+    it('should handle props with closed shadow DOM', () => {
+      rain.closed('test-closed-props', ['data'], function(props) {
+        return () => html`<div>Data: ${props.data}</div>`
+      })
+      
+      const element = document.createElement('test-closed-props')
+      element.setAttribute('data', 'secret')
+      document.body.appendChild(element)
+      
+      // Shadow root is closed but component still works
+      expect(element.shadowRoot).toBeNull()
+      
+      document.body.removeChild(element)
+    })
+  })
+
+  describe('rain shadow DOM modes', () => {
+    it('should default rain() to open shadow DOM', () => {
+      rain('test-default-open', function() {
+        return () => html`<div>Default Open</div>`
+      })
+      
+      const element = document.createElement('test-default-open')
+      document.body.appendChild(element)
+      
+      // Default should be open (shadowRoot accessible)
+      expect(element.shadowRoot).toBeDefined()
+      expect(element.shadowRoot.textContent).toBe('Default Open')
+      
+      document.body.removeChild(element)
+    })
 
     it('should accept function as second parameter when no props needed', () => {
-      const registered = rain.open('test-no-props', function() {
+      const registered = rain('test-no-props', function() {
         return () => html`<div>No Props</div>`
       })
       
@@ -118,7 +166,7 @@ describe('component.js', () => {
     it('should call onMounted when connected', () => {
       let mounted = false
       
-      rain.open('test-mounted', function() {
+      rain('test-mounted', function() {
         onMounted(() => {
           mounted = true
         })
@@ -137,7 +185,7 @@ describe('component.js', () => {
     it('should call onUnmounted when disconnected', () => {
       let unmounted = false
       
-      rain.open('test-unmounted', function() {
+      rain('test-unmounted', function() {
         onUnmounted(() => {
           unmounted = true
         })
@@ -156,7 +204,7 @@ describe('component.js', () => {
     it('should support multiple lifecycle hooks', () => {
       let calls = []
       
-      rain.open('test-multiple-hooks', function() {
+      rain('test-multiple-hooks', function() {
         onMounted(() => calls.push('mounted1'))
         onMounted(() => calls.push('mounted2'))
         onUnmounted(() => calls.push('unmounted1'))
@@ -190,7 +238,7 @@ describe('component.js', () => {
     it('should have emit method for custom events', () => {
       let eventReceived = null
       
-      rain.open('test-emit', function() {
+      rain('test-emit', function() {
         return () => html`<div>Emit Test</div>`
       })
       
@@ -209,7 +257,7 @@ describe('component.js', () => {
     })
 
     it('should handle internal state with signals', () => {
-      rain.open('test-state', function() {
+      rain('test-state', function() {
         const [count, setCount] = $(0)
         return () => html`
           <div>
@@ -228,20 +276,20 @@ describe('component.js', () => {
     })
 
     it('should handle factory errors gracefully', () => {
-      rain.open('test-factory-error', function() {
+      rain('test-factory-error', function() {
         throw new Error('Factory error')
       })
       
       const element = document.createElement('test-factory-error')
       document.body.appendChild(element)
       
-      expect(element.shadowRoot.textContent.includes('failed to render')).toBe(true)
+      expect(element.shadowRoot.textContent.includes('error')).toBe(true)
       
       document.body.removeChild(element)
     })
 
     it('should handle render errors gracefully', () => {
-      rain.open('test-render-error', function() {
+      rain('test-render-error', function() {
         return () => {
           throw new Error('Render error')
         }
@@ -250,7 +298,7 @@ describe('component.js', () => {
       const element = document.createElement('test-render-error')
       document.body.appendChild(element)
       
-      expect(element.shadowRoot.textContent.includes('failed to render')).toBe(true)
+      expect(element.shadowRoot.textContent.includes('error')).toBe(true)
       
       document.body.removeChild(element)
     })
@@ -258,7 +306,7 @@ describe('component.js', () => {
 
   describe('props reactivity', () => {
     it('should initialize props from attributes', async () => {
-      rain.open('test-props-init', ['name', 'count'], function(props) {
+      rain('test-props-init', ['name', 'count'], function(props) {
         return () => html`<div>Name: ${props.name}, Count: ${props.count}</div>`
       })
       
@@ -286,7 +334,7 @@ describe('component.js', () => {
     })
 
     it('should handle empty props', () => {
-      rain.open('test-empty-props', [], function(props) {
+      rain('test-empty-props', [], function(props) {
         return () => html`<div>No props</div>`
       })
       
@@ -299,7 +347,7 @@ describe('component.js', () => {
     })
 
     it('should default to empty string for missing attributes', () => {
-      rain.open('test-missing-attrs', ['missing'], function(props) {
+      rain('test-missing-attrs', ['missing'], function(props) {
         return () => html`<div>Missing: "${props.missing}"</div>`
       })
       
@@ -324,7 +372,7 @@ describe('component.js', () => {
     it('should return shadow root when called inside component factory', () => {
       let capturedRoot = null
       
-      rain.open('test-get-shadow-root', function() {
+      rain('test-get-shadow-root', function() {
         capturedRoot = getShadowRoot()
         return () => html`<div>Shadow Root Test</div>`
       })
@@ -341,7 +389,7 @@ describe('component.js', () => {
     it('should allow modifying adoptedStyleSheets via getShadowRoot', () => {
       let modifiedRoot = false
       
-      rain.open('test-modify-shadow', function() {
+      rain('test-modify-shadow', function() {
         const root = getShadowRoot()
         // Simulate adding a stylesheet
         root.adoptedStyleSheets = []
@@ -381,7 +429,7 @@ describe('component.js', () => {
       rain.autoAdopt()
       
       expect(() => {
-        rain.open('test-no-adopt-link', function() {
+        rain('test-no-adopt-link', function() {
           return () => html`<div>No Adopt Link</div>`
         })
         const element = document.createElement('test-no-adopt-link')
@@ -409,7 +457,7 @@ describe('component.js', () => {
       rain.autoAdopt()
       
       let componentCreated = false
-      rain.open('test-with-adopt-link', function() {
+      rain('test-with-adopt-link', function() {
         componentCreated = true
         return () => html`<div>With Adopt Link</div>`
       })
@@ -445,7 +493,7 @@ describe('component.js', () => {
       rain.autoAdopt()
       
       expect(() => {
-        rain.open('test-fetch-error', function() {
+        rain('test-fetch-error', function() {
           return () => html`<div>Fetch Error Test</div>`
         })
         const element = document.createElement('test-fetch-error')
@@ -479,7 +527,7 @@ describe('component.js', () => {
       rain.autoAdopt()
       
       // Create first component
-      rain.open('test-cache-1', function() {
+      rain('test-cache-1', function() {
         return () => html`<div>Cache Test 1</div>`
       })
       const element1 = document.createElement('test-cache-1')
@@ -489,7 +537,7 @@ describe('component.js', () => {
       await new Promise(resolve => setTimeout(resolve, 10))
       
       // Create second component  
-      rain.open('test-cache-2', function() {
+      rain('test-cache-2', function() {
         return () => html`<div>Cache Test 2</div>`
       })
       const element2 = document.createElement('test-cache-2')

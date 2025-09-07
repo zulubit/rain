@@ -70,12 +70,12 @@ export function html(strings, ...values) {
   modifiedStrings[modifiedStrings.length - 1] += `<!-- ${getInstanceKey()} -->`
 
   const result = htmBound(modifiedStrings, ...values)
-  
+
   // Check for multiple root elements
   if (Array.isArray(result)) {
     throwError('Multiple root elements are not allowed. Wrap your template in a single root element.')
   }
-  
+
   return result
 }
 
@@ -93,7 +93,7 @@ export function css(strings, ...values) {
   return $.computed(() => {
     const style = document.createElement('style')
     let result = ''
-    
+
     for (let i = 0; i < strings.length; i++) {
       result += strings[i]
       if (i < values.length) {
@@ -101,7 +101,7 @@ export function css(strings, ...values) {
         result += typeof value === 'function' && value[SIGNAL_SYMBOL] ? value() : value
       }
     }
-    
+
     style.textContent = result
     return style
   })
