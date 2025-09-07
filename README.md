@@ -90,6 +90,23 @@ Add this CSS to your HTML `<head>` to prevent components from showing before the
 
 This is especially useful for slotted content, which always appears before components mount and can cause visual flashes.
 
+### Auto-Adopting Stylesheets
+
+Automatically inherit stylesheets (like Tailwind) in all components:
+
+```html
+<!-- Mark stylesheet for auto-adoption -->
+<link href="/tailwind.css" rel="stylesheet" data-rain-adopt>
+```
+
+```jsx
+// Enable once per app
+rain.autoAdopt()
+
+// All components now get Tailwind automatically
+rain('my-card', () => () => <div className="bg-blue-500 p-4">Styled!</div>)
+```
+
 ### Build and Serve
 
 ```bash

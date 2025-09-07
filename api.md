@@ -300,6 +300,50 @@ onUnmounted(() => {
 **Parameters**:
 - `fn: () => void` - unmount callback
 
+### `getShadowRoot()`
+Gets the shadow root of the current component for direct DOM access.
+
+```jsx
+rain('styled-component', function() {
+  const root = getShadowRoot()
+  
+  // Adopt external stylesheets
+  const sheet = new CSSStyleSheet()
+  sheet.replaceSync('@import "/tailwind.css"')
+  root.adoptedStyleSheets = [sheet]
+  
+  return () => <div className="bg-blue-500">Styled with Tailwind</div>
+})
+```
+
+**Returns**: `ShadowRoot` - the component's shadow root
+**Throws**: Error if called outside component factory
+
+### `rain.autoAdopt()`
+Enables automatic adoption of stylesheets marked with `data-rain-adopt` attribute.
+
+```html
+<!-- In your HTML head -->
+<link href="/tailwind.css" rel="stylesheet" data-rain-adopt>
+```
+
+```jsx
+// Enable auto-adoption once per app
+rain.autoAdopt()
+
+// Now all components automatically get the stylesheet
+rain('my-component', function() {
+  return () => <div className="bg-blue-500 p-4">Auto-styled with Tailwind!</div>
+})
+```
+
+**Behavior**:
+- Scans `document.head` for first `<link>` with `data-rain-adopt` attribute
+- Fetches and caches the stylesheet once per app
+- Adopts the cached stylesheet into every component's shadow DOM
+- Silently fails if stylesheet cannot be loaded
+- Only takes effect after `rain.autoAdopt()` is called
+
 ## JSX Syntax
 
 ### Event Handling

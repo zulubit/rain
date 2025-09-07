@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { rain, onMounted, onUnmounted } from '../src/component.js'
+import { rain, onMounted, onUnmounted, getShadowRoot } from '../src/component.js'
 import { $ } from '../src/core.js'
 import { jsx } from '../src/jsx.js'
 
@@ -314,6 +314,103 @@ describe('component.js', () => {
       expect(element.shadowRoot.textContent).toBe('Missing: ""')
       
       document.body.removeChild(element)
+    })
+  })
+
+  describe('getShadowRoot', () => {
+    it('should return the shadow root when called inside component factory', () => {
+      let capturedRoot
+      let factoryCalled = false
+      
+      rain('test-get-root', function() {
+        factoryCalled = true
+        capturedRoot = getShadowRoot()
+        return () => jsx('div', null, 'Root Test')
+      })
+      
+      const element = document.createElement('test-get-root')
+      document.body.appendChild(element)
+      
+      expect(factoryCalled).toBe(true)
+      expect(capturedRoot).toBeDefined()
+      expect(capturedRoot).toBe(element.shadowRoot)
+      expect(capturedRoot.mode).toBe('open')
+      
+      document.body.removeChild(element)
+    })
+
+    it('should throw error when called outside component factory', () => {
+      expect(() => getShadowRoot()).toThrow('getShadowRoot() called outside component factory')
+    })
+
+    it('should allow adopting stylesheets', () => {
+      let shadowRoot
+      
+      rain('test-adopt-styles', function() {
+        shadowRoot = getShadowRoot()
+        
+        // Create and adopt a stylesheet
+        const sheet = new CSSStyleSheet()
+        sheet.replaceSync('.test { color: red; }')
+        shadowRoot.adoptedStyleSheets = [sheet]
+        
+        return () => jsx('div', { className: 'test' }, 'Styled')
+      })
+      
+      const element = document.createElement('test-adopt-styles')
+      document.body.appendChild(element)
+      
+      expect(shadowRoot.adoptedStyleSheets).toHaveLength(1)
+      expect(shadowRoot.adoptedStyleSheets[0].cssRules[0].cssText).toContain('color: red')
+      
+      document.body.removeChild(element)
+    })
+  })
+
+  describe('rain.autoAdopt', () => {
+    it('should have autoAdopt method', () => {
+      expect(typeof rain.autoAdopt).toBe('function')
+    })
+
+    it('should not auto-adopt when disabled by default', () => {
+      rain('test-no-auto-adopt', function() {
+        return () => jsx('div', null, 'No Auto Styles')
+      })
+      
+      const element = document.createElement('test-no-auto-adopt')
+      document.body.appendChild(element)
+      
+      expect(element.shadowRoot.adoptedStyleSheets).toHaveLength(0)
+      
+      document.body.removeChild(element)
+    })
+
+    it('should auto-adopt stylesheet when enabled and data-rain-adopt exists', async () => {
+      // Create a mock link element with data-rain-adopt
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = 'data:text/css,.test { color: blue; }'
+      link.setAttribute('data-rain-adopt', '')
+      document.head.appendChild(link)
+      
+      // Enable auto-adopt
+      rain.autoAdopt()
+      
+      rain('test-auto-adopt', function() {
+        return () => jsx('div', { className: 'test' }, 'Auto Styled')
+      })
+      
+      const element = document.createElement('test-auto-adopt')
+      document.body.appendChild(element)
+      
+      // Wait for async stylesheet adoption
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      expect(element.shadowRoot.adoptedStyleSheets.length).toBeGreaterThan(0)
+      
+      // Cleanup
+      document.body.removeChild(element)
+      document.head.removeChild(link)
     })
   })
 })

@@ -83,6 +83,18 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
       setupMemoryManagement(this)
 
       const root = this.attachShadow({ mode: shadowMode })
+      this._root = root
+
+      // Auto-adopt stylesheet if enabled
+      if (autoAdoptEnabled) {
+        scanAndAdoptStylesheet().then(stylesheet => {
+          if (stylesheet) {
+            root.adoptedStyleSheets = [...root.adoptedStyleSheets, stylesheet]
+          }
+        }).catch(() => {
+          // Silently fail
+        })
+      }
 
       currentInstance = this
 
@@ -138,7 +150,6 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         </div>`
       }
 
-      this._root = root
       this._isMounted = false
     }
 
@@ -204,6 +215,46 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
 let currentInstance
 
 /**
+ * Auto-adoption state and cache
+ */
+let autoAdoptEnabled = false
+let autoAdoptStylesheet = null
+
+/**
+ * Scans document head for first stylesheet marked with data-rain-adopt
+ * @returns {Promise<CSSStyleSheet|null>} The adopted stylesheet or null
+ * @private
+ */
+async function scanAndAdoptStylesheet() {
+  if (autoAdoptStylesheet !== null) {
+    return autoAdoptStylesheet
+  }
+
+  try {
+    const link = document.head.querySelector('link[data-rain-adopt][href]')
+    
+    if (link) {
+      const response = await fetch(link.href)
+      if (response.ok) {
+        const cssText = await response.text()
+        const sheet = new CSSStyleSheet()
+        await sheet.replace(cssText)
+        autoAdoptStylesheet = sheet
+        return sheet
+      }
+    }
+  } catch (error) {
+    // Silently fail
+    if (typeof window !== 'undefined' && window.RAIN_DEBUG) {
+      console.log(`[Rain:AutoAdopt] Failed to load stylesheet:`, error.message)
+    }
+  }
+
+  autoAdoptStylesheet = false // Mark as attempted but failed
+  return null
+}
+
+/**
  * Defines a reactive web component with open shadow DOM (default)
  * @param {string} name
  * @param {string[] | Function} propNames
@@ -266,6 +317,15 @@ rain.closed = function(name, propNames, factory) {
 }
 
 /**
+ * Enables automatic adoption of stylesheets marked with data-rain-adopt
+ * @example
+ * rain.autoAdopt() // Enable for all components
+ */
+rain.autoAdopt = function() {
+  autoAdoptEnabled = true
+}
+
+/**
  * Registers a callback to run when component mounts
  * @param {() => void} cb
  * @example
@@ -293,4 +353,21 @@ function onUnmounted(cb) {
   (currentInstance._unmountedCallbacks ||= []).push(cb)
 }
 
-export { rain, onMounted, onUnmounted }
+/**
+ * Gets the shadow root of the current component
+ * @returns {ShadowRoot} The component's shadow root
+ * @example
+ * const root = getShadowRoot()
+ * root.adoptedStyleSheets = [myStyleSheet]
+ */
+function getShadowRoot() {
+  if (!currentInstance) {
+    throw new Error('getShadowRoot() called outside component factory')
+  }
+  if (!currentInstance._root) {
+    throw new Error('Component has no shadow root')
+  }
+  return currentInstance._root
+}
+
+export { rain, onMounted, onUnmounted, getShadowRoot }
