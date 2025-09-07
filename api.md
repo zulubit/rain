@@ -2,6 +2,19 @@
 
 Complete reference for RainWC functions and utilities.
 
+## Imports
+
+```javascript
+// Core functions
+import { $, html, css, render } from 'rainwc'
+
+// Component system
+import { rain, onMounted, onUnmounted, getShadowRoot } from 'rainwc'
+
+// Everything
+import { $, html, css, render, rain, onMounted, onUnmounted, getShadowRoot } from 'rainwc'
+```
+
 ## Core Functions
 
 ### `$(initialValue)`
@@ -161,6 +174,153 @@ rain.open('my-component', ['title'], function(props) {
 
 **Parameters**: Same as `rain()`
 **Returns**: `boolean` - success status
+
+### `rain.autoAdopt()`
+Enables automatic adoption of stylesheets marked with `data-rain-adopt` attribute for all components.
+
+```javascript
+// Enable auto-adopt for all components
+rain.autoAdopt()
+
+// Mark a stylesheet in HTML head for automatic adoption
+// <link rel="stylesheet" href="styles.css" data-rain-adopt>
+```
+
+**Benefits**:
+- Automatically loads and adopts external stylesheets into component shadow DOM
+- Uses Constructable Stylesheets for optimal performance  
+- Caches stylesheet content - fetched only once for all components
+- Gracefully handles fetch errors without breaking components
+
+**Usage Example**:
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="components.css" data-rain-adopt>
+</head>
+<body>
+  <script type="module">
+    import { rain } from './rainwc.js'
+    
+    // Enable auto-adoption
+    rain.autoAdopt()
+    
+    // All components will now automatically adopt components.css
+    rain('my-component', function() {
+      return () => html`<div class="styled">Auto-styled content</div>`
+    })
+  </script>
+</body>
+</html>
+```
+
+### `getShadowRoot()`
+Gets the shadow root of the current component - only callable within component factory functions.
+
+```javascript
+rain('my-component', function() {
+  const root = getShadowRoot()
+  
+  // Manually add stylesheets
+  root.adoptedStyleSheets = [myStyleSheet]
+  
+  return () => html`<div>Content</div>`
+})
+```
+
+**Returns**: `ShadowRoot` - the component's shadow root
+
+**Throws**: 
+- Error if called outside component factory
+- Error if component has no shadow root
+
+**Use Cases**:
+- Manual stylesheet adoption
+- Direct shadow DOM manipulation
+- Integration with third-party libraries that need shadow root access
+
+## CSS Styling
+
+### Automatic Stylesheet Adoption
+RainWC can automatically adopt external stylesheets into component shadow DOM:
+
+1. **Enable auto-adoption** with `rain.autoAdopt()`
+2. **Mark stylesheets** in HTML head with `data-rain-adopt` attribute
+3. **All components** automatically receive the styles
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- This stylesheet will be auto-adopted by all components -->
+  <link rel="stylesheet" href="theme.css" data-rain-adopt>
+</head>
+<body>
+  <script type="module">
+    import { rain } from 'rainwc'
+    
+    // Enable automatic stylesheet adoption
+    rain.autoAdopt()
+    
+    rain('themed-button', function() {
+      return () => html`<button class="primary">Styled Button</button>`
+    })
+  </script>
+  
+  <themed-button></themed-button>
+</body>
+</html>
+```
+
+### Manual Stylesheet Control
+For more control, use `getShadowRoot()` to manually manage stylesheets:
+
+```javascript
+rain('custom-styled', function() {
+  const root = getShadowRoot()
+  
+  // Create custom stylesheet
+  const sheet = new CSSStyleSheet()
+  sheet.replaceSync(`
+    .custom { 
+      color: blue; 
+      font-weight: bold; 
+    }
+  `)
+  
+  // Adopt it
+  root.adoptedStyleSheets = [sheet]
+  
+  return () => html`<div class="custom">Custom styled content</div>`
+})
+```
+
+### Reactive CSS
+Use the `css` template function for dynamic, reactive styles:
+
+```javascript
+rain('dynamic-theme', function() {
+  const [isDark, setIsDark] = $(false)
+  
+  const styles = css`
+    .container {
+      background: ${() => isDark() ? '#333' : '#fff'};
+      color: ${() => isDark() ? '#fff' : '#333'};
+      padding: 1rem;
+    }
+  `
+  
+  return () => html`
+    <div class="container">
+      ${styles}
+      <button @click=${() => setIsDark(!isDark())}>
+        ${() => isDark() ? 'Light' : 'Dark'} Theme
+      </button>
+    </div>
+  `
+})
+```
 
 ## Template System
 

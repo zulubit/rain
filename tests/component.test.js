@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { rain, onMounted, onUnmounted } from '../src/component.js'
+import { rain, onMounted, onUnmounted, getShadowRoot } from '../src/component.js'
 import { $, html } from '../src/core.js'
 
 describe('component.js', () => {
@@ -315,6 +315,204 @@ describe('component.js', () => {
       expect(element.shadowRoot.textContent).toBe('Missing: ""')
       
       document.body.removeChild(element)
+    })
+  })
+
+  describe('getShadowRoot function', () => {
+    it('should be available as export', () => {
+      expect(typeof getShadowRoot).toBe('function')
+    })
+
+    it('should throw error when called outside component factory', () => {
+      expect(() => getShadowRoot()).toThrow('getShadowRoot() called outside component factory')
+    })
+
+    it('should return shadow root when called inside component factory', () => {
+      let capturedRoot = null
+      
+      rain.open('test-get-shadow-root', function() {
+        capturedRoot = getShadowRoot()
+        return () => html`<div>Shadow Root Test</div>`
+      })
+      
+      const element = document.createElement('test-get-shadow-root')
+      document.body.appendChild(element)
+      
+      expect(capturedRoot).toBe(element.shadowRoot)
+      expect(capturedRoot instanceof ShadowRoot).toBe(true)
+      
+      document.body.removeChild(element)
+    })
+
+    it('should allow modifying adoptedStyleSheets via getShadowRoot', () => {
+      let modifiedRoot = false
+      
+      rain.open('test-modify-shadow', function() {
+        const root = getShadowRoot()
+        // Simulate adding a stylesheet
+        root.adoptedStyleSheets = []
+        modifiedRoot = true
+        return () => html`<div>Modified Shadow</div>`
+      })
+      
+      const element = document.createElement('test-modify-shadow')
+      document.body.appendChild(element)
+      
+      expect(modifiedRoot).toBe(true)
+      expect(Array.isArray(element.shadowRoot.adoptedStyleSheets)).toBe(true)
+      
+      document.body.removeChild(element)
+    })
+  })
+
+  describe('auto-adopt functionality', () => {
+    beforeEach(() => {
+      // Clean up any existing stylesheets in document head
+      const existingLinks = document.head.querySelectorAll('link[data-rain-adopt]')
+      existingLinks.forEach(link => link.remove())
+      
+      // Reset auto-adopt state between tests
+      rain._resetAutoAdopt()
+    })
+
+    it('should have autoAdopt method on rain function', () => {
+      expect(typeof rain.autoAdopt).toBe('function')
+    })
+
+    it('should enable auto-adopt when called', () => {
+      expect(() => rain.autoAdopt()).not.toThrow()
+    })
+
+    it('should not crash when no data-rain-adopt link exists', () => {
+      rain.autoAdopt()
+      
+      expect(() => {
+        rain.open('test-no-adopt-link', function() {
+          return () => html`<div>No Adopt Link</div>`
+        })
+        const element = document.createElement('test-no-adopt-link')
+        document.body.appendChild(element)
+        document.body.removeChild(element)
+      }).not.toThrow()
+    })
+
+    it('should find data-rain-adopt link in document head', async () => {
+      // Create a mock link element
+      const mockLink = document.createElement('link')
+      mockLink.rel = 'stylesheet'
+      mockLink.href = 'data:text/css,body { color: red; }'
+      mockLink.setAttribute('data-rain-adopt', '')
+      document.head.appendChild(mockLink)
+      
+      // Mock fetch for the CSS content
+      global.fetch = vi.fn(() => 
+        Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve('body { color: red; }')
+        })
+      )
+      
+      rain.autoAdopt()
+      
+      let componentCreated = false
+      rain.open('test-with-adopt-link', function() {
+        componentCreated = true
+        return () => html`<div>With Adopt Link</div>`
+      })
+      
+      const element = document.createElement('test-with-adopt-link')
+      document.body.appendChild(element)
+      
+      expect(componentCreated).toBe(true)
+      
+      // Wait a tick for async stylesheet adoption
+      await new Promise(resolve => setTimeout(resolve, 0))
+      
+      document.body.removeChild(element)
+      document.head.removeChild(mockLink)
+      
+      // Clean up mock
+      global.fetch.mockRestore && global.fetch.mockRestore()
+    })
+
+    it('should handle fetch errors gracefully', async () => {
+      // Create a mock link element
+      const mockLink = document.createElement('link')
+      mockLink.rel = 'stylesheet'  
+      mockLink.href = 'https://example.com/nonexistent.css'
+      mockLink.setAttribute('data-rain-adopt', '')
+      document.head.appendChild(mockLink)
+      
+      // Mock fetch to fail
+      global.fetch = vi.fn(() => 
+        Promise.reject(new Error('Network error'))
+      )
+      
+      rain.autoAdopt()
+      
+      expect(() => {
+        rain.open('test-fetch-error', function() {
+          return () => html`<div>Fetch Error Test</div>`
+        })
+        const element = document.createElement('test-fetch-error')
+        document.body.appendChild(element)
+        document.body.removeChild(element)
+      }).not.toThrow()
+      
+      document.head.removeChild(mockLink)
+      
+      // Clean up mock
+      global.fetch.mockRestore && global.fetch.mockRestore()
+    })
+
+    it('should cache stylesheet and reuse it for multiple components', async () => {
+      // Create a mock link element
+      const mockLink = document.createElement('link')
+      mockLink.rel = 'stylesheet'
+      mockLink.href = 'data:text/css,body { color: blue; }'
+      mockLink.setAttribute('data-rain-adopt', '')
+      document.head.appendChild(mockLink)
+      
+      let fetchCallCount = 0
+      global.fetch = vi.fn(() => {
+        fetchCallCount++
+        return Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve('body { color: blue; }')
+        })
+      })
+      
+      rain.autoAdopt()
+      
+      // Create first component
+      rain.open('test-cache-1', function() {
+        return () => html`<div>Cache Test 1</div>`
+      })
+      const element1 = document.createElement('test-cache-1')
+      document.body.appendChild(element1)
+      
+      // Wait for async adoption
+      await new Promise(resolve => setTimeout(resolve, 10))
+      
+      // Create second component  
+      rain.open('test-cache-2', function() {
+        return () => html`<div>Cache Test 2</div>`
+      })
+      const element2 = document.createElement('test-cache-2')
+      document.body.appendChild(element2)
+      
+      // Wait for async adoption
+      await new Promise(resolve => setTimeout(resolve, 10))
+      
+      // Should only fetch once due to caching
+      expect(fetchCallCount).toBe(1)
+      
+      document.body.removeChild(element1)
+      document.body.removeChild(element2)
+      document.head.removeChild(mockLink)
+      
+      // Clean up mock
+      global.fetch.mockRestore && global.fetch.mockRestore()
     })
   })
 })

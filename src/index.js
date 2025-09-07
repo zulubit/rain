@@ -4,4 +4,4 @@
 
 export { $, html, css } from './core.js'
 
-export { rain, onMounted, onUnmounted } from './component.js'
+export { rain, onMounted, onUnmounted, getShadowRoot } from './component.js'
