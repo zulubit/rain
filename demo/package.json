@@ -1,0 +1,15 @@
+{
+  "name": "rainbow-demo",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "npm run build && go run main.go"
+  },
+  "dependencies": {
+    "rainwc": "file:.."
+  },
+  "devDependencies": {
+    "vite": "^7.1.2"
+  }
+}

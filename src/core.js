@@ -57,6 +57,9 @@ $.computed = function(computation) {
   return accessor
 }
 
+// Alias for shorter syntax
+$.c = $.computed
+
 /**
  * Creates an effect that runs when dependencies change
  * @param {() => void} fn

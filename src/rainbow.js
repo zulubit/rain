@@ -12,28 +12,55 @@ import { jsx } from './jsx.js'
  */
 let pageDataSignal = $({})
 let globalDataSignal = $({})
+let loadingSignal = $(false)
+
+// Store getter functions to ensure they're stable references
+const pageDataGetter = pageDataSignal[0]
+const globalDataGetter = globalDataSignal[0]
+const loadingGetter = loadingSignal[0]
+const loadingSetter = loadingSignal[1]
 
 /**
  * Rainbow server-driven paradigm API
- * @namespace $$
+ * @typedef {Object} RainbowAPI
+ * @property {() => Object} page - Access current page data signal
+ * @property {() => Object} global - Access current global data signal
+ * @property {() => boolean} loading - Access loading state signal
+ * @property {(options?: Object) => Promise<Object>} update - Update current page data
+ * @property {(url: string, options?: Object) => Function} submitForm - Submit form with automatic data collection
+ */
+
+/**
+ * Rainbow server-driven paradigm API
+ * @type {RainbowAPI}
  */
 const $$ = {
   /**
-   * Access current page data
-   * @returns {Object} Current page data object
+   * Access current page data signal
+   * @type {() => Object}
    * @example
-   * const user = $$.page().user
+   * const pd = $$.page
+   * return () => <div>Message: {pd().message}</div>
    */
-  page: () => pageDataSignal[0](),
+  page: pageDataGetter,
 
   /**
-   * Access current global data (always contains csrf_token and flash)
-   * @returns {Object} Current global data object
+   * Access current global data signal  
+   * @type {() => Object}
    * @example
-   * const token = $$.global().csrf_token
-   * const messages = $$.global().flash
+   * const gd = $$.global
+   * return () => <div>Token: {gd().csrf_token}</div>
    */
-  global: () => globalDataSignal[0]()
+  global: globalDataGetter,
+
+  /**
+   * Access loading state signal
+   * @type {() => boolean}
+   * @example
+   * const loading = $$.loading
+   * return () => <button disabled={loading()}>Submit</button>
+   */
+  loading: loadingGetter
 }
 
 /**
@@ -104,6 +131,9 @@ async function makeRequest(url, options = {}) {
     requestOptions.body = JSON.stringify(requestData)
   }
 
+  // Set loading state
+  loadingSetter(true)
+
   try {
     const response = await fetch(url, requestOptions)
 
@@ -140,6 +170,9 @@ async function makeRequest(url, options = {}) {
     }
 
     throw error
+  } finally {
+    // Clear loading state
+    loadingSetter(false)
   }
 }
 
@@ -241,6 +274,9 @@ $$.submitForm = function(url, options = {}) {
       formData.append('_page', JSON.stringify($$.page()))
       formData.append('_global', JSON.stringify($$.global()))
 
+      // Set loading state
+      loadingSetter(true)
+
       try {
         const response = await fetch(url, {
           method: requestOptions.method,
@@ -279,6 +315,9 @@ $$.submitForm = function(url, options = {}) {
         }
 
         throw error
+      } finally {
+        // Clear loading state
+        loadingSetter(false)
       }
     } else {
       return makeRequest(url, requestOptions)

@@ -32,21 +32,12 @@ npm install rainwc
 
 ## Quick Start
 
-### Using the Plugin (Works with both esbuild and Vite)
+### Using with Vite
 
-RainWC provides a universal plugin that automatically configures JSX for both esbuild and Vite:
+RainWC provides a Vite plugin that automatically configures JSX:
 
-```js
-// esbuild.config.js
-import { build } from 'esbuild'
-import rainwc from 'rainwc/plugin'
-
-await build({
-  entryPoints: ['src/app.jsx'],
-  outfile: 'dist/app.js',
-  bundle: true,
-  plugins: [rainwc()]
-})
+```bash
+npm install rainwc vite
 ```
 
 ```js
@@ -55,14 +46,29 @@ import { defineConfig } from 'vite'
 import rainwc from 'rainwc/plugin'
 
 export default defineConfig({
-  plugins: [rainwc()]
+  plugins: [rainwc()],
+  build: {
+    lib: {
+      entry: 'src/app.jsx',
+      name: 'App',
+      fileName: 'app',
+      formats: ['es']
+    },
+    rollupOptions: {
+      output: {
+        dir: 'static'
+      }
+    }
+  }
 })
 ```
+
+This builds `src/app.jsx` into `static/app.js` without generating an HTML file.
 
 Then write your components:
 
 ```jsx
-// MyComponent.jsx
+// src/app.jsx
 import { rain, $ } from 'rainwc'
 
 rain('my-component', function() {
@@ -84,18 +90,14 @@ Add this CSS to your HTML `<head>` to prevent components from showing before the
 
 This is especially useful for slotted content, which always appears before components mount and can cause visual flashes.
 
-### Manual Configuration
+### Build and Serve
 
-If you prefer to configure JSX manually:
+```bash
+# Build your components
+npm run build  # or: vite build
 
-```js
-// esbuild or vite config
-{
-  jsx: 'transform',
-  jsxFactory: 'jsx',
-  jsxFragment: 'Fragment',
-  jsxInject: `import { jsx, Fragment } from 'rainwc'`
-}
+# Serve your app however you like
+# The demo/ folder shows an example with Go
 ```
 
 ## Documentation

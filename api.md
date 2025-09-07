@@ -16,18 +16,24 @@ const [user, setUser] = $({ name: 'Alice' })
 - `getter()` - returns current value
 - `setter(newValue)` - updates value
 
-### `$.computed(fn)`
+### `$.computed(fn)` / `$.c(fn)`
 Creates a computed signal that updates when dependencies change.
 
 ```jsx
 const doubled = $.computed(() => count() * 2)
 const fullName = $.computed(() => `${first()} ${last()}`)
+
+// Shorter alias for cleaner code
+const message = $.c(() => pd().message)
+const deepValue = $.c(() => data().level1.level2.value)
 ```
 
 **Parameters**:
 - `fn: () => T` - computation function
 
 **Returns**: `() => T` - readonly computed accessor
+
+**Note**: `$.c` is an alias for `$.computed` - both work identically
 
 ### `$.effect(fn)`
 Runs side effects when dependencies change.
@@ -403,28 +409,33 @@ return () => (
 </my-card>
 ```
 
+
 ## Build Configuration
 
-### Universal Plugin (Works with both esbuild and Vite)
+### Vite Plugin
 ```js
-// With esbuild
-import rainwc from 'rainwc/plugin'
-import { build } from 'esbuild'
-
-build({
-  entryPoints: ['src/app.jsx'],
-  bundle: true,
-  plugins: [rainwc()]
-})
-
-// With Vite
 import rainwc from 'rainwc/plugin'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [rainwc()]
+  plugins: [rainwc()],
+  build: {
+    lib: {
+      entry: 'src/app.jsx',
+      name: 'App',
+      fileName: 'app',
+      formats: ['es']
+    },
+    rollupOptions: {
+      output: {
+        dir: 'static'
+      }
+    }
+  }
 })
 ```
+
+This builds `src/app.jsx` into `static/app.js` without generating an HTML file.
 
 ### Manual Configuration
 ```js

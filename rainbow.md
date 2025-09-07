@@ -14,15 +14,17 @@ Server-driven reactive paradigm for RainWC. Build dynamic apps where the server 
 import { rain, $$, $ } from 'rainwc'
 
 rain('user-dashboard', function() {
-  const pageData = $$.page()
-  const globalData = $$.global()
+  const pd = $$.page
+  const gd = $$.global
+  const loading = $$.loading
   
   return () => (
     <div>
-      <h1>Welcome {pageData().user?.name}</h1>
-      <button onClick={() => $$.update({ action: 'refresh' })}>
-        Refresh
+      <h1>Welcome {$.c(() => pd().user?.name)}</h1>
+      <button onClick={() => $$.update({ action: 'refresh' })} disabled={loading}>
+        {$.c(() => loading() ? 'Loading...' : 'Refresh')}
       </button>
+      {gd().flash.map(msg => <div class="flash">{msg}</div>)}
     </div>
   )
 })
@@ -35,6 +37,7 @@ rain('user-dashboard', function() {
 - **Automatic CSRF** - Tokens included from global data
 - **File upload support** - Multipart forms handled automatically
 - **Error handling** - Validation errors update component state
+- **Loading state** - Automatic loading indicators during requests
 - **Zero client state** - No complex state management needed
 
 ## Installation
@@ -90,13 +93,15 @@ Components automatically get access to server data:
 
 ```jsx
 rain('my-header', function() {
-  const page = $$.page()   // Access page-data
-  const global = $$.global() // Access global-data
+  const pd = $$.page      // Access page-data signal
+  const gd = $$.global    // Access global-data signal
+  const loading = $$.loading // Access loading state
   
   return () => (
     <header>
-      <span>User: {page().user?.id}</span>
-      {global().flash.map(msg => <div>{msg}</div>)}
+      <span>User: {$.c(() => pd().user?.id)}</span>
+      {gd().flash.map(msg => <div class="flash">{msg}</div>)}
+      {$.c(() => loading() && <div class="spinner">Loading...</div>)}
     </header>
   )
 })
@@ -104,26 +109,44 @@ rain('my-header', function() {
 
 ## API Reference
 
-### `$$.page()`
-Access current page data (fully flexible structure).
+### `$$.page`
+Access current page data signal (fully flexible structure).
 
 ```jsx
-const userData = $$.page().user
-const posts = $$.page().posts
+const pd = $$.page
+const userData = $.c(() => pd().user)
+const posts = $.c(() => pd().posts)
 ```
 
-**Returns**: `Object` - Current page data
+**Returns**: `() => Object` - Signal function returning current page data
 
-### `$$.global()`  
-Access current global data (always contains `csrf_token` and `flash`).
+### `$$.global`  
+Access current global data signal (always contains `csrf_token` and `flash`).
 
 ```jsx
-const token = $$.global().csrf_token
-const messages = $$.global().flash
-const errors = $$.global().errors
+const gd = $$.global
+const token = $.c(() => gd().csrf_token)
+const messages = $.c(() => gd().flash)
+const errors = $.c(() => gd().errors)
 ```
 
-**Returns**: `Object` - Current global data with guaranteed structure
+**Returns**: `() => Object` - Signal function returning current global data with guaranteed structure
+
+### `$$.loading`
+Access loading state signal - automatically managed during requests.
+
+```jsx
+const loading = $$.loading
+
+// Use in templates
+return () => (
+  <button disabled={loading()}>
+    {$.c(() => loading() ? 'Saving...' : 'Save')}
+  </button>
+)
+```
+
+**Returns**: `() => boolean` - Signal function returning loading state
 
 
 ### `$$.update(options?)`
@@ -238,19 +261,22 @@ $$.update({
 ### Forms
 ```jsx
 rain('user-form', function() {
-  const page = $$.page()
-  const global = $$.global()
+  const pd = $$.page
+  const gd = $$.global
+  const loading = $$.loading
   
   return () => (
     <form onSubmit={$$.submitForm('/users/update')}>
-      <input name="name" defaultValue={page().user.name} />
+      <input name="name" defaultValue={$.c(() => pd().user?.name)} />
       <input type="file" name="avatar" />
       
-      {global().errors?.name && (
-        <span class="error">{global().errors.name}</span>
+      {$.c(() => gd().errors?.name) && (
+        <span class="error">{$.c(() => gd().errors.name)}</span>
       )}
       
-      <button>Save</button>
+      <button disabled={loading}>
+        {$.c(() => loading() ? 'Saving...' : 'Save')}
+      </button>
     </form>
   )
 })
@@ -259,22 +285,25 @@ rain('user-form', function() {
 ### Error Handling
 ```jsx
 rain('error-example', function() {
-  const global = $$.global()
+  const gd = $$.global
+  const loading = $$.loading
   
   const handleAction = async () => {
     try {
       await $$.update({ data: { risky_action: true } })
     } catch (error) {
-      // Error automatically added to global().errors
-      console.log('Action failed:', global().errors.request)
+      // Error automatically added to gd().errors
+      console.log('Action failed:', gd().errors?.request)
     }
   }
   
   return () => (
     <div>
-      <button onClick={handleAction}>Try Action</button>
-      {global().errors?.request && (
-        <div class="error">{global().errors.request}</div>
+      <button onClick={handleAction} disabled={loading}>
+        {$.c(() => loading() ? 'Processing...' : 'Try Action')}
+      </button>
+      {$.c(() => gd().errors?.request) && (
+        <div class="error">{$.c(() => gd().errors.request)}</div>
       )}
     </div>
   )
