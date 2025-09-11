@@ -180,6 +180,17 @@ let currentInstance
 
 /**
  * Defines a reactive web component with open shadow DOM (default)
+ * @overload
+ * @param {string} name - Component name (must include hyphen)
+ * @param {string[]} propNames - Array of prop names
+ * @param {(props: Record<string, () => any>) => () => Element} factory - Component factory
+ * @returns {boolean}
+ * 
+ * @overload
+ * @param {string} name - Component name (must include hyphen)
+ * @param {(props: Record<string, () => any>) => () => Element} factory - Component factory
+ * @returns {boolean}
+ * 
  * @param {string} name
  * @param {string[] | Function} propNames
  * @param {Function} [factory]
@@ -188,6 +199,14 @@ let currentInstance
  * rain('my-button', ['label'], function(props) {
  *   return () => html`<button>${props.label()}</button>`
  * })
+ * @example
+ * // With typed props using JSDoc
+ * rain('user-card', ['name', 'age'],
+ *   /** @type {(props: {name: () => string, age: () => number}) => () => Element} *\/
+ *   function(props) {
+ *     return () => html`<div>${props.name()} is ${props.age()}</div>`
+ *   }
+ * )
  */
 function rain(name, propNames, factory) {
   try {
@@ -211,9 +230,9 @@ function rain(name, propNames, factory) {
 
 /**
  * Defines a reactive web component with closed shadow DOM
- * @param {string} name
- * @param {string[] | Function} propNames
- * @param {Function} [factory]
+ * @param {string} name - Component name (must include hyphen)
+ * @param {string[] | (props: Record<string, () => any>) => () => Element} propNames - Array of prop names or factory
+ * @param {(props: Record<string, () => any>) => () => Element} [factory] - Component factory
  * @returns {boolean}
  * @example
  * rain.closed('secure-component', ['data'], function(props) {

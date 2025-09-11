@@ -2,7 +2,7 @@
  * @fileoverview Signal utilities for RainWC
  */
 
-import { signal, computed, effect } from '@preact/signals-core'
+import { signal, computed, effect, batch } from '@preact/signals-core'
 import { throwError } from './error-utils.js'
 
 const SIGNAL_SYMBOL = Symbol('rain.signal')
@@ -60,6 +60,26 @@ $.effect = function(fn) {
     throwError('$.effect expects a function, got ' + typeof fn)
   }
   return effect(fn)
+}
+
+/**
+ * Batches signal updates to avoid multiple re-renders
+ * @param {() => any} fn - Function containing signal updates
+ * @returns {any} Return value of the function
+ * @example
+ * const [name, setName] = $('John')
+ * const [age, setAge] = $(30)
+ * $.batch(() => {
+ *   setName('Alice')
+ *   setAge(25)
+ *   // Only triggers one re-render
+ * })
+ */
+$.batch = function(fn) {
+  if (typeof fn !== 'function') {
+    throwError('$.batch expects a function, got ' + typeof fn)
+  }
+  return batch(fn)
 }
 
 /**

@@ -92,6 +92,34 @@ $.emit('custom-event', { data: 'value' }, element)
 - `detail?: any` - event detail data (optional)
 - `target?: EventTarget` - target to emit from (defaults to document)
 
+### `$.batch(fn)`
+Batches signal updates to avoid multiple re-renders.
+
+```javascript
+// Multiple signal updates in one batch
+const [name, setName] = $('John')
+const [age, setAge] = $(30)
+const [email, setEmail] = $('john@example.com')
+
+$.batch(() => {
+  setName('Alice')
+  setAge(25) 
+  setEmail('alice@example.com')
+  // Only triggers one re-render for all three changes
+})
+
+// With return value
+const result = $.batch(() => {
+  updateUser(userData)
+  return computeTotal()
+})
+```
+
+**Parameters**:
+- `fn: () => T` - function containing signal updates
+
+**Returns**: `T` - return value of the batched function
+
 ### `css`
 Creates reactive CSS stylesheets using template literals.
 
@@ -522,3 +550,54 @@ Enable debug logging:
 ```javascript
 window.RAIN_DEBUG = true
 ```
+
+## Tips & Best Practices
+
+### Type-Safe Components with JSDoc
+
+While Rain is JavaScript-first, you can get excellent IDE support and type checking using JSDoc comments:
+
+```javascript
+// Define typed props inline
+rain('user-card', ['name', 'age'],
+  /** @type {(props: {name: () => string, age: () => number}) => () => Element} */
+  function(props) {
+    // Now props.name() is typed as string
+    // and props.age() is typed as number
+    return () => html`
+      <div>${props.name()} is ${props.age()} years old</div>
+    `
+  }
+)
+
+// Or define prop types separately for reuse
+/** @typedef {{name: () => string, age: () => number, email: () => string}} UserProfileProps */
+
+rain('user-profile', ['name', 'age', 'email'],
+  /** @param {UserProfileProps} props */
+  function(props) {
+    return () => html`
+      <div>
+        <h2>${props.name()}</h2>
+        <p>Age: ${props.age()}</p>
+        <p>Email: ${props.email()}</p>
+      </div>
+    `
+  }
+)
+```
+
+### Performance Tips
+
+1. **Use keys in lists** for better reconciliation:
+   ```javascript
+   $.list(items, item => html`<li>${item.name}</li>`, item => item.id)
+   ```
+
+2. **Memoize expensive computations**:
+   ```javascript
+   const expensive = $.computed(() => {
+     // This only recalculates when dependencies change
+     return heavyCalculation(data())
+   })
+   ```
