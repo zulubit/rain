@@ -3,7 +3,7 @@
  */
 
 import { effect } from '@preact/signals-core'
-import { $, SIGNAL_SYMBOL } from './signal-utils.js'
+import { $, isReactive } from './signal-utils.js'
 import { html, css } from './template-utils.js'
 import { createList } from './list-utils.js'
 import { throwError } from './error-utils.js'
@@ -62,7 +62,7 @@ function render(elementOrFn, container) {
  * $.if(isLoading, () => html`<div>Loading...</div>`)
  */
 $.if = function(conditionSignal, trueFn, falseFn) {
-  if (typeof conditionSignal !== 'function' || !conditionSignal[SIGNAL_SYMBOL]) {
+  if (!isReactive(conditionSignal)) {
     throwError('$.if() expects a signal as first argument')
   }
 
@@ -102,9 +102,7 @@ $.if = function(conditionSignal, trueFn, falseFn) {
  * @example
  * $.list(items, item => html`<li>${item.name}</li>`, item => item.id)
  */
-$.list = function(itemsSignal, renderFn, keyFn) {
-  return createList(itemsSignal, renderFn, keyFn)
-}
+$.list = createList
 
 /**
  * Creates HTML from raw string (bypasses XSS protection)

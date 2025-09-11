@@ -35,12 +35,11 @@ describe('core.js', () => {
       expect(arr()).toEqual([4, 5])
     })
 
-    it('should have signal symbol on getter and setter', () => {
+    it('should have preact signal brand on getter and setter', () => {
       const [getter, setter] = $(0)
-      const SIGNAL_SYMBOL = Object.getOwnPropertySymbols(getter)[0]
-      expect(getter[SIGNAL_SYMBOL]).toBeDefined()
-      expect(setter[SIGNAL_SYMBOL]).toBeDefined()
-      expect(getter[SIGNAL_SYMBOL]).toBe(setter[SIGNAL_SYMBOL])
+      const PREACT_BRAND = Symbol.for('preact-signals')
+      expect(getter.brand).toBe(PREACT_BRAND)
+      expect(setter.brand).toBe(PREACT_BRAND)
     })
   })
 

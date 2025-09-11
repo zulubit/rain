@@ -4,7 +4,7 @@
 
 import htm from 'htm'
 import { effect } from '@preact/signals-core'
-import { $, SIGNAL_SYMBOL, isReactive } from './signal-utils.js'
+import { $, isReactive } from './signal-utils.js'
 import { processAttribute, processChild } from './dom-utils.js'
 import { throwError } from './error-utils.js'
 
@@ -67,7 +67,9 @@ export function html(strings, ...values) {
     modifiedStrings[modifiedStrings.length - 1] = modifiedStrings[modifiedStrings.length - 1].trimEnd()
   }
 
-  modifiedStrings[modifiedStrings.length - 1] += `<!-- ${getInstanceKey()} -->`
+  if (typeof window !== 'undefined' && window.RAIN_DEBUG) {
+    modifiedStrings[modifiedStrings.length - 1] += `<!-- ${getInstanceKey()} -->`
+  }
 
   const result = htmBound(modifiedStrings, ...values)
 
@@ -92,17 +94,17 @@ export function css(strings, ...values) {
 
   return $.computed(() => {
     const style = document.createElement('style')
-    let result = ''
+    const parts = []
 
     for (let i = 0; i < strings.length; i++) {
-      result += strings[i]
+      parts.push(strings[i])
       if (i < values.length) {
         const value = values[i]
-        result += typeof value === 'function' && value[SIGNAL_SYMBOL] ? value() : value
+        parts.push(isReactive(value) ? value() : value)
       }
     }
 
-    style.textContent = result
+    style.textContent = parts.join('')
     return style
   })
 }

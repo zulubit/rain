@@ -39,13 +39,6 @@ function setupLifecycleHooks(component) {
   component._um = []
 }
 
-/**
- * @private
- * @param {HTMLElement} component
- */
-function setupMemoryManagement(component) {
-  component._cleanups = new Set()
-}
 
 /**
  * @private
@@ -76,7 +69,6 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
       }
 
       setupLifecycleHooks(this)
-      setupMemoryManagement(this)
 
       const root = this.attachShadow({ mode: shadowMode })
       this._root = root
@@ -118,23 +110,10 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         root.innerHTML = `<div style="padding: 1rem; background: #fee; border: 1px solid #fcc;"><strong style="color: #c00;">Error: ${name}</strong></div>`
       }
 
-      this._isMounted = false
     }
 
-    _cleanupElement(element) {
-      if (element._listCleanup && typeof element._listCleanup === 'function') {
-        element._listCleanup()
-        element._listCleanup = null
-      }
-
-      Array.from(element.children).forEach(child => {
-        this._cleanupElement(child)
-      })
-    }
 
     connectedCallback() {
-      this._isMounted = true
-
       this._m?.forEach(cb => {
         try {
           cb()
@@ -145,16 +124,6 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
     }
 
     disconnectedCallback() {
-      this._cleanups?.forEach(cleanup => {
-        if (typeof cleanup === 'function') {
-          try {
-            cleanup()
-          } catch (error) {
-            logError(`Component ${this.tagName.toLowerCase()} cleanup error:`, error)
-          }
-        }
-      })
-
       this._um?.forEach(cb => {
         try {
           cb()
@@ -180,20 +149,9 @@ let currentInstance
 
 /**
  * Defines a reactive web component with open shadow DOM (default)
- * @overload
  * @param {string} name - Component name (must include hyphen)
- * @param {string[]} propNames - Array of prop names
- * @param {(props: Record<string, () => any>) => () => Element} factory - Component factory
- * @returns {boolean}
- * 
- * @overload
- * @param {string} name - Component name (must include hyphen)
- * @param {(props: Record<string, () => any>) => () => Element} factory - Component factory
- * @returns {boolean}
- * 
- * @param {string} name
- * @param {string[] | Function} propNames
- * @param {Function} [factory]
+ * @param {string[] | Function} propNames - Array of prop names or factory
+ * @param {Function} [factory] - Component factory
  * @returns {boolean}
  * @example
  * rain('my-button', ['label'], function(props) {
@@ -231,8 +189,8 @@ function rain(name, propNames, factory) {
 /**
  * Defines a reactive web component with closed shadow DOM
  * @param {string} name - Component name (must include hyphen)
- * @param {string[] | (props: Record<string, () => any>) => () => Element} propNames - Array of prop names or factory
- * @param {(props: Record<string, () => any>) => () => Element} [factory] - Component factory
+ * @param {string[] | Function} propNames - Array of prop names or factory
+ * @param {Function} [factory] - Component factory
  * @returns {boolean}
  * @example
  * rain.closed('secure-component', ['data'], function(props) {

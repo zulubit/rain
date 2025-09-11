@@ -105,8 +105,6 @@ function processChild(element, child) {
 }
 
 export {
-  setElementValue,
-  handleReactiveValue,
   processAttribute,
   processChild
 }

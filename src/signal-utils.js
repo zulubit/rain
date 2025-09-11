@@ -5,7 +5,7 @@
 import { signal, computed, effect, batch } from '@preact/signals-core'
 import { throwError } from './error-utils.js'
 
-const SIGNAL_SYMBOL = Symbol('rain.signal')
+const SIGNAL_BRAND = Symbol.for('preact-signals')
 
 /**
  * Creates a reactive signal with tuple return
@@ -24,8 +24,8 @@ function $(initialValue) {
     sig.value = newValue
   }
 
-  getter[SIGNAL_SYMBOL] = sig
-  setter[SIGNAL_SYMBOL] = sig
+  getter.brand = SIGNAL_BRAND
+  setter.brand = SIGNAL_BRAND
 
   return [getter, setter]
 }
@@ -44,7 +44,7 @@ $.computed = function(computation) {
   }
   const comp = computed(computation)
   const accessor = () => comp.value
-  accessor[SIGNAL_SYMBOL] = comp
+  accessor.brand = SIGNAL_BRAND
   return accessor
 }
 
@@ -135,7 +135,7 @@ $.emit = function(eventName, detail, target) {
  * @returns {boolean}
  */
 function isReactive(value) {
-  return typeof value === 'function' && value[SIGNAL_SYMBOL]
+  return typeof value === 'function' && value.brand === SIGNAL_BRAND
 }
 
-export { $, SIGNAL_SYMBOL, isReactive }
+export { $, isReactive }
