@@ -92,6 +92,31 @@ $.emit('custom-event', { data: 'value' }, element)
 - `detail?: any` - event detail data (optional)
 - `target?: EventTarget` - target to emit from (defaults to document)
 
+### `$.effectEmit(eventName, signalValue, target?)`
+Auto-emits events whenever a signal value changes.
+
+```javascript
+const [count, setCount] = $(0)
+const cleanup = $.effectEmit('count-changed', count)
+
+// Component communication
+rain('counter', function() {
+  const [count, setCount] = $(0)
+  $.effectEmit('count-updated', count) 
+
+  return () => html`<button @click=${() => setCount(count() + 1)}>
+    Count: ${count()}
+  </button>`
+})
+```
+
+**Parameters**:
+- `eventName: string` - event name to emit
+- `signalValue: () => any` - signal getter function to watch
+- `target?: EventTarget` - target to emit from (defaults to document)
+
+**Returns**: `() => void` - cleanup function
+
 ### `$.batch(fn)`
 Batches signal updates to avoid multiple re-renders.
 

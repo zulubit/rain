@@ -407,4 +407,87 @@ describe('component.js', () => {
     })
   })
 
+  describe('automatic cleanup', () => {
+    it('should auto-cleanup effects when component is disconnected', () => {
+      let effectRan = false
+      const [signal, setSignal] = $(0)
+      
+      rain('cleanup-test', function() {
+        $.effect(() => {
+          effectRan = true
+          signal()
+        })
+        return () => html`<div>test</div>`
+      })
+
+      const element = document.createElement('cleanup-test')
+      document.body.appendChild(element)
+      
+      effectRan = false
+      
+      setSignal(1)
+      expect(effectRan).toBe(true)
+      
+      element.remove()
+      
+      effectRan = false
+      setSignal(2)
+      
+      expect(effectRan).toBe(false)
+    })
+
+    it('should auto-cleanup event listeners when component is disconnected', () => {
+      let listenerCalled = false
+      
+      rain('listener-cleanup-test', function() {
+        $.listen('test-event', () => {
+          listenerCalled = true
+        })
+        return () => html`<div>test</div>`
+      })
+
+      const element = document.createElement('listener-cleanup-test')
+      document.body.appendChild(element)
+      
+      $.emit('test-event')
+      expect(listenerCalled).toBe(true)
+      
+      element.remove()
+      
+      listenerCalled = false
+      $.emit('test-event')
+      
+      expect(listenerCalled).toBe(false)
+    })
+
+    it('should auto-cleanup effectEmit when component is disconnected', () => {
+      const [signal, setSignal] = $(0)
+      let eventReceived = false
+      
+      const cleanup = $.listen('auto-emit-test', () => {
+        eventReceived = true
+      })
+      
+      rain('effectemit-cleanup-test', function() {
+        $.effectEmit('auto-emit-test', signal)
+        return () => html`<div>test</div>`
+      })
+
+      const element = document.createElement('effectemit-cleanup-test')
+      document.body.appendChild(element)
+      
+      setSignal(1)
+      expect(eventReceived).toBe(true)
+      
+      element.remove()
+      
+      eventReceived = false
+      setSignal(2)
+      
+      expect(eventReceived).toBe(false)
+      
+      cleanup()
+    })
+  })
+
 })

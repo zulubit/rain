@@ -37,8 +37,8 @@ function validateRainParams(name, propNames, factory) {
 function setupLifecycleHooks(component) {
   component._m = []
   component._um = []
+  component._cleanups = []
 }
-
 
 /**
  * @private
@@ -75,6 +75,10 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
 
       currentInstance = this
 
+      if (typeof window !== 'undefined') {
+        window.__currentRainInstance = this
+      }
+
       this.emit = (eventName, detail) => {
         this.dispatchEvent(
           new CustomEvent(eventName, {
@@ -95,6 +99,10 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
 
       currentInstance = null
 
+      if (typeof window !== 'undefined') {
+        window.__currentRainInstance = null
+      }
+
       let templateResult
       try {
         templateResult = template()
@@ -112,7 +120,6 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
 
     }
 
-
     connectedCallback() {
       this._m?.forEach(cb => {
         try {
@@ -124,6 +131,16 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
     }
 
     disconnectedCallback() {
+      this._cleanups?.forEach(cleanup => {
+        try {
+          if (typeof cleanup === 'function') {
+            cleanup()
+          }
+        } catch (error) {
+          logError(`Component ${this.tagName.toLowerCase()} cleanup error:`, error)
+        }
+      })
+
       this._um?.forEach(cb => {
         try {
           cb()

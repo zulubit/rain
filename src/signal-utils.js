@@ -59,7 +59,13 @@ $.effect = function(fn) {
   if (typeof fn !== 'function') {
     throwError('$.effect expects a function, got ' + typeof fn)
   }
-  return effect(fn)
+  const cleanup = effect(fn)
+
+  if (typeof window !== 'undefined' && window.__currentRainInstance?._cleanups) {
+    window.__currentRainInstance._cleanups.push(cleanup)
+  }
+
+  return cleanup
 }
 
 /**
@@ -101,9 +107,15 @@ $.listen = function(eventName, handler, target = document) {
 
   target.addEventListener(eventName, handler)
 
-  return () => {
+  const cleanup = () => {
     target.removeEventListener(eventName, handler)
   }
+
+  if (typeof window !== 'undefined' && window.__currentRainInstance?._cleanups) {
+    window.__currentRainInstance._cleanups.push(cleanup)
+  }
+
+  return cleanup
 }
 
 /**
@@ -128,6 +140,36 @@ $.emit = function(eventName, detail, target) {
   })
 
   emitter.dispatchEvent(event)
+}
+
+/**
+ * Auto-emit events when signal value changes
+ * @param {string} eventName
+ * @param {() => any} signalValue
+ * @param {EventTarget} [target]
+ * @returns {() => void}
+ * @example
+ * const [count, setCount] = $(0)
+ * const cleanup = $.effectEmit('count-changed', count)
+ */
+$.effectEmit = function(eventName, signalValue, target) {
+  if (typeof eventName !== 'string') {
+    throwError('$.effectEmit expects eventName to be a string')
+  }
+  if (typeof signalValue !== 'function') {
+    throwError('$.effectEmit expects signalValue to be a signal getter function')
+  }
+
+  let previousValue
+
+  return $.effect(() => {
+    const value = signalValue()
+
+    if (value !== previousValue) {
+      previousValue = value
+      $.emit(eventName, value, target)
+    }
+  })
 }
 
 /**
