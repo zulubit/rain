@@ -1,6 +1,8 @@
 # 🌧️ RainWC
 
-A lightweight reactive Web Components framework with fine-grained reactivity and no build step required.
+**Web Elements that enhance, not replace, your HTML**
+
+A lightweight framework for sprinkling reactive components onto traditional web apps. No build step, no page takeover.
 
 ```javascript
 // Simple counter component
@@ -19,8 +21,8 @@ rain('my-counter', function() {
 
 - **Fine-grained reactivity** with Preact signals
 - **No build step** - works directly in the browser
-- **Web Components** with reactive templates
-- **Tiny size** - 7KB gzipped
+- **Web Elements** with reactive templates
+- **Tiny size** - ~5KB gzipped
 - **TypeScript friendly** with full JSDoc annotations
 
 ## Installation
@@ -63,6 +65,7 @@ rain('user-card', ['name', 'age'], function(props) {
 ## Documentation
 
 - [API Reference](api.md) - Complete API documentation
+- [Patterns Guide](patterns.md) - Common patterns and best practices
 
 ## Example
 
@@ -103,6 +106,13 @@ RainWC is built on top of excellent open source libraries:
 
 - **[@preact/signals-core](https://github.com/preactjs/signals)** - Fine-grained reactivity system
 - **[HTM](https://github.com/developit/htm)** - JSX-like syntax using template literals
+
+Inspired by:
+
+- **[Preact](https://github.com/preactjs/preact)**
+- **[Alpine.js](https://github.com/alpinejs/alpine)**
+- **[Petite-Vue](https://github.com/vuejs/petite-vue)**
+- **[SolidJS](https://github.com/solidjs/solid)**
 
 ## License
 

@@ -48,9 +48,6 @@ function h(type, props, ...children) {
 
 const htmBound = htm.bind(h)
 
-let instanceCounter = 0
-const getInstanceKey = () => ++instanceCounter
-
 /**
  * HTM template function for creating reactive DOM elements
  * @param {TemplateStringsArray} strings
@@ -65,10 +62,6 @@ export function html(strings, ...values) {
   if (modifiedStrings.length > 0) {
     modifiedStrings[0] = modifiedStrings[0].trimStart()
     modifiedStrings[modifiedStrings.length - 1] = modifiedStrings[modifiedStrings.length - 1].trimEnd()
-  }
-
-  if (typeof window !== 'undefined' && window.RAIN_DEBUG) {
-    modifiedStrings[modifiedStrings.length - 1] += `<!-- ${getInstanceKey()} -->`
   }
 
   const result = htmBound(modifiedStrings, ...values)

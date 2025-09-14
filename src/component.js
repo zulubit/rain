@@ -2,7 +2,7 @@
  * @fileoverview RainJS Component System
  */
 
-import { html, render, $ } from './core.js'
+import { render, $ } from './core.js'
 import { logError, throwError } from './error-utils.js'
 
 /**
@@ -45,10 +45,9 @@ function setupLifecycleHooks(component) {
  * @param {string} name
  * @param {string[]} propNames
  * @param {Function} factory
- * @param {'open'|'closed'} [shadowMode='closed']
  * @returns {typeof HTMLElement}
  */
-function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
+function createComponentClass(name, propNames, factory) {
   const ComponentClass = class extends HTMLElement {
     static get observedAttributes() {
       return this._propNames || []
@@ -70,14 +69,14 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
 
       setupLifecycleHooks(this)
 
-      const root = this.attachShadow({ mode: shadowMode })
-      this._root = root
-
       currentInstance = this
 
       if (typeof window !== 'undefined') {
         window.__currentRainInstance = this
       }
+
+      // Capture initial children before they're replaced
+      this._initialChildren = Array.from(this.childNodes)
 
       this.emit = (eventName, detail) => {
         this.dispatchEvent(
@@ -94,7 +93,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         template = factory.call(this, props)
       } catch (error) {
         logError(`Component factory error in ${name}:`, error)
-        template = () => html`<div style="color: red; padding: 1rem;">Component "${name}" error</div>`
+        template = () => document.createTextNode(`Component "${name}" error`)
       }
 
       currentInstance = null
@@ -108,14 +107,14 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
         templateResult = template()
       } catch (error) {
         logError(`Component render error in ${name}:`, error)
-        templateResult = html`<div style="color: red; padding: 1rem;">Component "${name}" error</div>`
+        templateResult = document.createTextNode(`Component "${name}" error`)
       }
 
       try {
-        render(templateResult, root)
+        render(templateResult, this)
       } catch (renderError) {
         logError(`Component critical error in ${name}:`, renderError)
-        root.innerHTML = `<div style="padding: 1rem; background: #fee; border: 1px solid #fcc;"><strong style="color: #c00;">Error: ${name}</strong></div>`
+        this.textContent = `Error: ${name}`
       }
 
     }
@@ -165,7 +164,7 @@ function createComponentClass(name, propNames, factory, shadowMode = 'closed') {
 let currentInstance
 
 /**
- * Defines a reactive web component with open shadow DOM (default)
+ * Defines a reactive web component without shadow DOM
  * @param {string} name - Component name (must include hyphen)
  * @param {string[] | Function} propNames - Array of prop names or factory
  * @param {Function} [factory] - Component factory
@@ -188,75 +187,16 @@ function rain(name, propNames, factory) {
     const { name: validatedName, propNames: validatedPropNames, factory: validatedFactory } = validateRainParams(name, propNames, factory)
 
     if (customElements.get(validatedName)) {
-      if (typeof window !== 'undefined' && window.RAIN_DEBUG) {
-        console.log(`[Rain:Component] '${validatedName}' already defined, skipping`)
-      }
       return true
     }
 
-    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'open')
+    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory)
     customElements.define(validatedName, ComponentClass)
     return true
   } catch (error) {
     logError(`Failed to register component '${name}':`, error)
     return false
   }
-}
-
-/**
- * Defines a reactive web component with closed shadow DOM
- * @param {string} name - Component name (must include hyphen)
- * @param {string[] | Function} propNames - Array of prop names or factory
- * @param {Function} [factory] - Component factory
- * @returns {boolean}
- * @example
- * rain.closed('secure-component', ['data'], function(props) {
- *   return () => html`<div>${props.data()}</div>`
- * })
- */
-rain.closed = function(name, propNames, factory) {
-  try {
-    const { name: validatedName, propNames: validatedPropNames, factory: validatedFactory } = validateRainParams(name, propNames, factory)
-
-    if (customElements.get(validatedName)) {
-      if (typeof window !== 'undefined' && window.RAIN_DEBUG) {
-        console.log(`[Rain:Component] '${validatedName}' already defined, skipping`)
-      }
-      return true
-    }
-
-    const ComponentClass = createComponentClass(validatedName, validatedPropNames, validatedFactory, 'closed')
-    customElements.define(validatedName, ComponentClass)
-    return true
-  } catch (error) {
-    logError(`Failed to register component '${name}':`, error)
-    return false
-  }
-}
-
-/**
- * Helper to create and adopt stylesheet from CSS string
- * @param {string} css - CSS string to adopt
- * @example
- * import styles from './theme.css?inline'
- * rain.adopt(styles)
- */
-rain.adopt = function(css) {
-  if (!currentInstance) {
-    throwError('rain.adopt() can only be called within component factory')
-  }
-  if (!currentInstance._root) {
-    throwError('Component has no shadow root')
-  }
-  if (typeof css !== 'string') {
-    throwError('rain.adopt() expects a CSS string')
-  }
-
-  const sheet = new CSSStyleSheet()
-  sheet.replaceSync(css)
-
-  const existingSheets = currentInstance._root.adoptedStyleSheets || []
-  currentInstance._root.adoptedStyleSheets = [...existingSheets, sheet]
 }
 
 /**
@@ -288,20 +228,37 @@ function onUnmounted(cb) {
 }
 
 /**
- * Gets the shadow root of the current component
- * @returns {ShadowRoot} The component's shadow root
+ * Gets the root element of the current component
+ * @returns {HTMLElement} The component's root element
  * @example
- * const root = getShadowRoot()
- * root.adoptedStyleSheets = [myStyleSheet]
+ * const root = getRoot()
+ * root.querySelector('button').focus()
  */
-function getShadowRoot() {
+function getRoot() {
   if (!currentInstance) {
-    throwError('getShadowRoot() called outside component factory')
+    throwError('getRoot() called outside component factory')
   }
-  if (!currentInstance._root) {
-    throwError('Component has no shadow root')
-  }
-  return currentInstance._root
+  return currentInstance
 }
 
-export { rain, onMounted, onUnmounted, getShadowRoot }
+/**
+ * Gets the children passed to the component
+ * @param {string} [slotName] - Optional slot name to filter by slot attribute
+ * @returns {Node[]} Array of child nodes
+ * @example
+ * const children = getChildren()
+ * const headerSlot = getChildren('header')
+ */
+function getChildren(slotName) {
+  if (!currentInstance) {
+    throwError('getChildren() called outside component factory')
+  }
+  if (!slotName) {
+    return currentInstance._initialChildren || []
+  }
+  return (currentInstance._initialChildren || []).filter(child =>
+    child.nodeType === 1 && child.getAttribute && child.getAttribute('slot') === slotName
+  )
+}
+
+export { rain, onMounted, onUnmounted, getRoot, getChildren }

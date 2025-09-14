@@ -173,6 +173,25 @@ $.effectEmit = function(eventName, signalValue, target) {
 }
 
 /**
+ * Creates a ref for capturing DOM element references in event handlers
+ * @returns {[() => Element | null, (event: Event) => Event]}
+ * @example
+ * const [inputRef, setInputRef] = $.ref()
+ * // Use: @input=${setInputRef}
+ * // Later: inputRef()?.focus()
+ */
+$.ref = function() {
+  const [ref, setRef] = $(null)
+
+  const refSetter = (event) => {
+    setRef(event.target)
+    return event
+  }
+
+  return [ref, refSetter]
+}
+
+/**
  * @param {any} value
  * @returns {boolean}
  */

@@ -43,9 +43,6 @@ export function createList(itemsSignal, renderFn, keyFn) {
       const uniqueKeys = new Set(keys).size === keys.length
 
       if (!validKeys || !uniqueKeys) {
-        if (typeof window !== 'undefined' && window.RAIN_DEBUG) {
-          console.log('[Rain:List] Invalid keys, falling back to full re-render')
-        }
         Array.from(container.children).forEach(child => child.remove())
         nodeMap.clear()
         items.forEach((item, index) => {
@@ -98,6 +95,7 @@ export function createList(itemsSignal, renderFn, keyFn) {
           nodeMap.delete(key)
         }
       }
+
     })
   } else {
     cleanup = effect(() => {
@@ -113,6 +111,7 @@ export function createList(itemsSignal, renderFn, keyFn) {
         }
         container.appendChild(node)
       })
+
     })
   }
 
